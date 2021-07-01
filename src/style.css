@@ -1,0 +1,41 @@
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;	
+}
+
+body {
+	font-size: 16px;
+	font-family: 'Harmattan', sans-serif;
+}
+
+canvas {
+	position: absolute;
+	left: 0;
+	top: 0;
+}
+
+.loading {
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 100vw;
+	height: 100vh;
+	background-color: rgb(77, 77, 77);
+	color: white;
+	display: flex;
+	justify-content: flex-end;
+	align-items: flex-end;
+	padding-right: 50px;
+	font-size: 6rem;
+}
+
+.text {
+	filter: drop-shadow(5px 5px 0px black);
+	pointer-events: none;
+	user-select: none;
+}
+
+.hidden {
+	display: none !important;
+}
