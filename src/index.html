@@ -1,22 +1,37 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-	<meta charset="UTF-8">
-	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<link rel="stylesheet" type="text/css" href="./style.css">
-	<title>TC</title>
-	<link rel="preconnect" href="https://fonts.googleapis.com">
-	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-	<link href="https://fonts.googleapis.com/css2?family=Harmattan&display=swap" rel="stylesheet">
-	<script src="index.js" defer></script>
-</head>
-<body>
-	<div class="loading">
-		<span class="text">Loading...</span>
-	</div>
-	<div class="game hidden">
-		<canvas class="game-canvas"></canvas>
-	</div>
-</body>
+   <head>
+      <meta charset="UTF-8" />
+      <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="stylesheet" type="text/css" href="./style.css" />
+      <title>TC</title>
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+      <link href="https://fonts.googleapis.com/css2?family=Harmattan&display=swap" rel="stylesheet" />
+      <script
+         src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"
+         integrity="sha512-WFN04846sdKMIP5LKNphMaWzU7YpMyCU245etK3g/2ARYbPK9Ub18eG+ljU96qKRCWh+quCY7yefSmlkQw1ANQ=="
+         crossorigin="anonymous"
+         referrerpolicy="no-referrer"
+         defer
+      ></script>
+      <script src="index.js" type="module" defer></script>
+   </head>
+   <body>
+      <div class="loading">
+         <!-- <div class="start hidden"> -->
+         <!-- <span class="start hidden text title">The Company</span> -->
+         <!-- </div> -->
+         <span class="text">Loading...</span>
+      </div>
+      <div class="start hidden">
+         <span class="press-space">space</span>
+      </div>
+      <div class="game hidden">
+         <canvas class="game-canvas"></canvas>
+      </div>
+      <div class="loading-canvas-div"></div>
+      <canvas class="fade-canvas"></canvas>
+   </body>
 </html>
