@@ -22,7 +22,7 @@ const controls = {
    KeyG: { action: 'drop-bag' },
 };
 window.gameState = {
-   player: new Player(100, 100, 35, 400),
+   player: new Player(100, 100, 35, 250),
    world: new World(1500, 1000),
    obstacles: [
       new Obstacle(1150, 250, 100, 100),
@@ -32,7 +32,7 @@ window.gameState = {
       new Obstacle(400, 600, 800, 100),
       new Obstacle(500, 875, 800, 100),
    ],
-   bags: [new Bag(800, 500, null)],
+   bags: [new Bag(800, 500, null), new Bag(500, 100, null)],
 };
 gameState.lines = [...gameState.world.lines()];
 gameState.obstacles.forEach((obstacle) => {
@@ -44,6 +44,7 @@ window.strokeSize = 2;
 const camera = new Vec(gameState.player.pos.x, gameState.player.pos.y);
 const mouse = new Vec(0, 0);
 window.scale = 1.2;
+window.backgroundColor = '#4d3b10';
 
 window.offset = function ({ x, y }) {
    return new Vec(
@@ -59,6 +60,9 @@ window.mousePos = function () {
 
 function update(state, delta) {
    state.player.update(input, state, delta);
+   state.bags.forEach((bag) => {
+      bag.update();
+   });
    camera.x = state.player.pos.x;
    camera.y = state.player.pos.y;
 }
@@ -79,18 +83,21 @@ function detectMouseHoverOnElements(state) {
 }
 
 function render(state) {
-   ctx.fillStyle = 'black';
+   ctx.fillStyle = 'rgb(97, 79, 36)';
    ctx.fillRect(0, 0, canvas.width, canvas.height);
    // state.world.render({ ctx, canvas });
+
    state.obstacles.forEach((obstacle) => {
       obstacle.render({ ctx, canvas });
    });
-   state.lines.forEach((line) => {
-      line.render(ctx);
-   });
+   // state.lines.forEach((line) => {
+   //    line.render(ctx);
+   // });
+   // ctx.globalCompositeOperation = 'source-in';
    state.bags.forEach((bag) => {
       bag.render({ ctx, canvas });
    });
+   // ctx.globalCompositeOperation = 'source-over';
    state.player.render(state, { ctx, canvas });
    detectMouseHoverOnElements(state);
    // ctx.beginPath();

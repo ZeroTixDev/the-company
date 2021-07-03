@@ -7,7 +7,7 @@ export default class Obstacle extends Rect {
    }
    render({ ctx, canvas }) {
       const pos = offset({ x: this.x, y: this.y });
-      ctx.fillStyle = 'black';
+      ctx.fillStyle = backgroundColor;
       ctx.fillRect(pos.x, pos.y, this.width * scale, this.height * scale);
    }
    collide(player) {

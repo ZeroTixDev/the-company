@@ -7,6 +7,14 @@ export default class Bag extends Item {
       this.content = content;
       this.radius = 40;
       this.bag = true;
+      this.timeToPickUp = 1;
+      this.holdingProgress = 0;
+      this.pickingUp = false;
+   }
+   update() {
+      if (!this.pickingUp) {
+         this.holdingProgress = 0;
+      }
    }
    collide(player) {
       const distX = player.pos.x - this.pos.x;
@@ -19,35 +27,37 @@ export default class Bag extends Item {
       return Math.sqrt(distX * distX + distY * distY) < this.radius + strokeSize * 2;
    }
    showHoverData(ctx) {
-      ctx.globalAlpha = 0.1;
-      ctx.fillStyle = 'white';
-      ctx.fillRect(
-         offset(new Vec(this.pos.x - this.radius, 0)).x,
-         offset(new Vec(0, this.pos.y - this.radius * 2)).y,
-         this.radius * 2 * scale,
-         this.radius * 0.8 * scale
-      );
-      ctx.globalAlpha = 1;
-      ctx.fillStyle = 'white';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.font = `${30 * scale}px Harmattan`;
-      ctx.save();
-      ctx.shadowBlur = 0;
-      ctx.shadowColor = 'black';
-      ctx.shadowOffsetX = 3 * scale;
-      ctx.shadowOffsetY = 3 * scale;
-      ctx.fillText('BAG', this.renderPos().x, offset(new Vec(this.pos.x, this.pos.y - this.radius * 1.5)).y);
-      ctx.restore();
+      // ctx.globalAlpha = 0.1;
+      // ctx.fillStyle = 'white';
+      // ctx.fillRect(
+      //    offset(new Vec(this.pos.x - this.radius, 0)).x,
+      //    offset(new Vec(0, this.pos.y - this.radius * 2)).y,
+      //    this.radius * 2 * scale,
+      //    this.radius * 0.8 * scale
+      // );
+      // ctx.globalAlpha = 1;
+      // ctx.fillStyle = 'white';
+      // ctx.textAlign = 'center';
+      // ctx.textBaseline = 'middle';
+      // ctx.font = `${30 * scale}px Harmattan`;
+      // ctx.save();
+      // ctx.shadowBlur = 0;
+      // ctx.shadowColor = 'black';
+      // ctx.shadowOffsetX = 3 * scale;
+      // ctx.shadowOffsetY = 3 * scale;
+      // ctx.fillText('BAG', this.renderPos().x, offset(new Vec(this.pos.x, this.pos.y - this.radius * 1.5)).y);
+      // ctx.restore();
    }
    render({ ctx, canvas }) {
       ctx.fillStyle = '#61440e';
       ctx.strokeStyle = '#261900';
       ctx.lineWidth = strokeSize * 2;
+      ctx.globalAlpha = 0.2;
       const pos = this.renderPos();
       ctx.beginPath();
       ctx.arc(pos.x, pos.y, this.radius * scale, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
+      ctx.globalAlpha = 1;
    }
 }
