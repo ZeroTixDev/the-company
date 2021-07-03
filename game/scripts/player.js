@@ -2,6 +2,12 @@ import Vec from './vector.js';
 import Ray from './raycast.js';
 import Bag from './bag.js';
 
+const Status = {
+   Disguised: { color: '#c2c2c2' },
+   Conspicuous: { color: '#d9d9d9' },
+   Suspicious: { color: '#bd0d0d' },
+};
+
 export default class Player {
    constructor(x, y, radius, speed) {
       this.pos = new Vec(x, y);
@@ -11,9 +17,12 @@ export default class Player {
       this.angle = 0;
       this.targetAngle = 0;
       this.angleRate = 5;
-      this.bag = new Bag(this.pos.x, this.pos.y, null);
+      this.bag = null; //new Bag(this.pos.x, this.pos.y, null);
       this.triggerText = '';
       this.triggerColor = 'white';
+      this.status = 'Disguised';
+      this.statusColor = Status[this.status].color;
+      this.name = 'ZeroTix';
    }
    renderPos() {
       return offset(this.pos);
@@ -37,6 +46,10 @@ export default class Player {
          if (this.bag === null) {
             this.bag = new Bag(this.pos.x, this.pos.y, item.content);
             array.splice(index, 1);
+            if (this.status === 'Disguised' || this.status === 'Conspicuous') {
+               this.status = 'Suspicious';
+               this.statusColor = Status[this.status].color;
+            }
          }
       }
    }
@@ -50,6 +63,10 @@ export default class Player {
          )
       );
       this.bag = null;
+      if (this.status === 'Suspicious') {
+         this.status = 'Disguised';
+         this.statusColor = Status[this.status].color;
+      }
    }
    update(input, state, delta) {
       // const dtheta = this.targetAngle - this.angle;
@@ -63,6 +80,18 @@ export default class Player {
 
       this.vel.x = (input.right - input.left) * delta * this.speed;
       this.vel.y = (input.down - input.up) * delta * this.speed;
+      if (input.shift) {
+         this.vel.x *= 1.8;
+         this.vel.y *= 1.8;
+         if (this.status === 'Disguised') {
+            this.status = 'Conspicuous';
+            this.statusColor = Status[this.status].color;
+         }
+      }
+      if (!input.shift && this.status === 'Conspicuous' && this.bag === null) {
+         this.status = 'Disguised';
+         this.statusColor = Status[this.status].color;
+      }
       this.pos.add(this.vel);
 
       this.boundFromWorld(state.world);
@@ -167,15 +196,29 @@ export default class Player {
          ctx.fillStyle = this.triggerColor;
          ctx.textAlign = 'center';
          ctx.textBaseline = 'middle';
-         ctx.font = `${50}px Harmattan`;
+         ctx.font = `${40}px Harmattan`;
          ctx.save();
          ctx.shadowBlur = 0;
          ctx.shadowColor = 'black';
          ctx.shadowOffsetX = 3;
          ctx.shadowOffsetY = 3;
-         ctx.fillText(this.triggerText, window.innerWidth / 2, window.innerHeight / 2 + window.innerHeight / 5);
+         ctx.fillText(this.triggerText, canvas.width / 2, canvas.height / 2 + canvas.height / 5);
          ctx.restore();
       }
+      ctx.fillStyle = 'white';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font = `${35 * scale}px Harmattan`;
+      ctx.save();
+      ctx.shadowBlur = 0;
+      ctx.shadowColor = 'black';
+      ctx.shadowOffsetX = 3;
+      ctx.shadowOffsetY = 3;
+      ctx.fillText(this.name, this.renderPos().x, offset(new Vec(0, this.pos.y - this.radius * 1.6)).y);
+      ctx.font = `${25 * scale}px Harmattan`;
+      ctx.fillStyle = this.statusColor;
+      ctx.fillText(this.status, this.renderPos().x, offset(new Vec(0, this.pos.y + this.radius * 1.8)).y);
+      ctx.restore();
    }
 }
 

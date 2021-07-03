@@ -6,25 +6,33 @@ import Obstacle from '../scripts/obstacle.js';
 
 const canvas = document.querySelector('.game-canvas');
 const ctx = canvas.getContext('2d');
-const input = { up: false, down: false, right: false, left: false, pickup: false };
+const input = { up: false, down: false, right: false, left: false, pickup: false, shift: false };
 const controls = {
    KeyW: { key: 'up' },
    KeyA: { key: 'left' },
    KeyD: { key: 'right' },
    KeyS: { key: 'down' },
+   ArrowUp: { key: 'up' },
+   ArrowLeft: { key: 'left' },
+   ArrowRight: { key: 'right' },
+   ArrowDown: { key: 'down' },
    KeyF: { key: 'pickup' },
+   ShiftLeft: { key: 'shift' },
+   ShiftRight: { key: 'shift' },
    KeyG: { action: 'drop-bag' },
 };
-const gameState = {
-   player: new Player(100, 100, 35, 500),
+window.gameState = {
+   player: new Player(100, 100, 35, 400),
    world: new World(1500, 1000),
    obstacles: [
-      new Obstacle(1200, 400, 75, 100),
-      new Obstacle(300, 500, 700, 0),
-      new Obstacle(500, 700, 800, 100),
+      new Obstacle(1150, 250, 100, 100),
+      new Obstacle(0, 200, 700, 0),
+      new Obstacle(900, 0, 0, 600),
+      new Obstacle(400, 400, 500, 0),
+      new Obstacle(400, 600, 800, 100),
       new Obstacle(500, 875, 800, 100),
    ],
-   bags: [new Bag(400, 100, null)],
+   bags: [new Bag(800, 500, null)],
 };
 gameState.lines = [...gameState.world.lines()];
 gameState.obstacles.forEach((obstacle) => {
