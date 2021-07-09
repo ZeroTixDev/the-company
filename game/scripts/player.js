@@ -28,16 +28,28 @@ export default class Player {
       this.health = 100;
       this.healthMax = 100;
       this.armor = { health: 100 };
+      this.sprintBar = { amount: 100 };
+      this.sprintRate = 25;
    }
    determineStatus(input) {
       let status = 'Disguised';
-      if ((input.shift && (input.right - input.left !== 0 || input.down - input.up !== 0)) || this.carryingBag) {
+      if (
+         (input.shift &&
+            (input.right - input.left !== 0 || input.down - input.up !== 0) &&
+            this.sprintBar.amount > 0) ||
+         this.carryingBag
+      ) {
          status = 'Conspicuous';
       }
       if (this.pickingUp) {
          status = 'Suspicious';
       }
-      if (input.shift && (input.right - input.left !== 0 || input.down - input.up !== 0) && this.carryingBag) {
+      if (
+         input.shift &&
+         (input.right - input.left !== 0 || input.down - input.up !== 0) &&
+         this.sprintBar.amount > 0 &&
+         this.carryingBag
+      ) {
          status = 'Distinguishable';
       }
       if (Status[status] === undefined) {
@@ -101,9 +113,14 @@ export default class Player {
 
       this.vel.x = (input.right - input.left) * delta * this.speed;
       this.vel.y = (input.down - input.up) * delta * this.speed;
-      if (input.shift) {
+      if (input.shift && this.sprintBar.amount > 0) {
          this.vel.x *= 1.7;
          this.vel.y *= 1.7;
+         this.sprintBar.amount -= this.sprintRate * delta;
+         this.sprintBar.amount = Math.max(this.sprintBar.amount, 0);
+      } else if (!input.shift) {
+         this.sprintBar.amount += (this.sprintRate / 3) * delta;
+         this.sprintBar.amount = Math.min(this.sprintBar.amount, 100);
       }
       if (this.carryingBag) {
          this.vel.x *= 0.65;
@@ -278,22 +295,30 @@ export default class Player {
       ctx.fillText(this.status, 20 + width / 2, canvas.height - 25);
       ctx.restore();
       ctx.fillStyle = 'rgb(28, 28, 28)';
-      ctx.fillRect(canvas.width - 400, canvas.height - 40, 300, 30);
+      ctx.fillRect(canvas.width - 375, canvas.height - 40, 275, 15);
+      ctx.fillRect(canvas.width - 400, canvas.height - 25, 300, 15);
       ctx.fillStyle = 'rgba(28, 28, 28, 0.5)';
-      ctx.fillRect(canvas.width - 398, canvas.height - 38, 300, 30);
+      // ctx.fillRect(canvas.width - 398, canvas.height - 38, 300, 30);
       ctx.fillStyle = '#00fa3a';
       ctx.fillRect(
          canvas.width - 100 - (this.health / this.healthMax) * 300,
          canvas.height - 25,
          (this.health / this.healthMax) * 300,
-         15
+         14
       );
       ctx.fillStyle = '#407be3';
       ctx.fillRect(
-         canvas.width - 100 - (this.armor.health / 100) * 300,
-         canvas.height - 41,
-         (this.armor.health / 100) * 300,
-         15
+         canvas.width - 100 - (this.armor.health / 100) * 275,
+         canvas.height - 40,
+         (this.armor.health / 100) * 275,
+         14
+      );
+      ctx.fillStyle = 'white';
+      ctx.fillRect(
+         canvas.width - 100 - (this.sprintBar.amount / 100) * 250,
+         canvas.height - 50,
+         (this.sprintBar.amount / 100) * 250,
+         10
       );
    }
 }
