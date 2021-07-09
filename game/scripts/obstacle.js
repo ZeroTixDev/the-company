@@ -8,7 +8,10 @@ export default class Obstacle extends Rect {
    render({ ctx, canvas }) {
       const pos = offset({ x: this.x, y: this.y });
       ctx.fillStyle = backgroundColor;
-      ctx.fillRect(pos.x, pos.y, this.width * scale, this.height * scale);
+      // ctx.fillRect(pos.x, pos.y, this.width * scale, this.height * scale);
+      ctx.strokeStyle = '#797985';
+      ctx.lineWidth = strokeSize * 3.5;
+      ctx.strokeRect(pos.x, pos.y, this.width * scale, this.height * scale);
    }
    collide(player) {
       const rectHalfSizeX = this.width / 2;

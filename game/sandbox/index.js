@@ -3,8 +3,13 @@ import World from '../scripts/world.js';
 import Vec from '../scripts/vector.js';
 import Bag from '../scripts/bag.js';
 import Obstacle from '../scripts/obstacle.js';
+import Ray from '../scripts/raycast.js';
 
 const canvas = document.querySelector('.game-canvas');
+const can = document.createElement('canvas');
+const ct = can.getContext('2d');
+// const rayCanvas = document.querySelector('.raycast-canvas');
+// const rayCtx = rayCanvas.getContext('2d');
 const ctx = canvas.getContext('2d');
 const input = { up: false, down: false, right: false, left: false, pickup: false, shift: false };
 const controls = {
@@ -25,11 +30,14 @@ window.gameState = {
    player: new Player(100, 100, 35, 250),
    world: new World(1500, 1000),
    obstacles: [
+      new Obstacle(0, 0, 0, 1000),
+      new Obstacle(0, 0, 1500, 0),
+      new Obstacle(0, 1000, 1500, 0),
+      new Obstacle(1500, 0, 0, 1000),
       new Obstacle(1150, 250, 100, 100),
       new Obstacle(0, 200, 700, 0),
-      new Obstacle(900, 0, 0, 600),
+      new Obstacle(900, 0, 100, 600),
       new Obstacle(400, 400, 500, 0),
-      new Obstacle(400, 600, 800, 100),
       new Obstacle(500, 875, 800, 100),
    ],
    bags: [new Bag(800, 500, null), new Bag(500, 100, null)],
@@ -40,11 +48,11 @@ gameState.obstacles.forEach((obstacle) => {
       gameState.lines.push(line);
    });
 });
-window.strokeSize = 2;
+window.strokeSize = 1;
 const camera = new Vec(gameState.player.pos.x, gameState.player.pos.y);
 const mouse = new Vec(0, 0);
 window.scale = 1.2;
-window.backgroundColor = '#4d3b10';
+window.backgroundColor = '#aba9c4';
 
 window.offset = function ({ x, y }) {
    return new Vec(
@@ -83,29 +91,62 @@ function detectMouseHoverOnElements(state) {
 }
 
 function render(state) {
-   ctx.fillStyle = 'rgb(97, 79, 36)';
-   ctx.fillRect(0, 0, canvas.width, canvas.height);
+   // ctx.globalCompositeOperation = 'source-over';
+   ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+   const points = Ray.getPoints(state.player.pos, state.lines, state.player.radius);
+   ctx.fillStyle = '#aba9c4';
+   ctx.beginPath();
+   ctx.globalAlpha = 1;
+   ctx.lineWidth = 20;
+   for (const { x, y } of points) {
+      const pos = offset({ x, y });
+      ctx.lineTo(pos.x, pos.y);
+   }
+   ctx.fill();
+   ctx.globalAlpha = 1;
+
+   // ctx.globalCompositeOperation = 'destination-in';
+
+   ctx.globalCompositeOperation = 'source-in';
+   ct.clearRect(0, 0, can.width, can.height);
+   ct.fillStyle = backgroundColor;
+   ct.fillRect(0, 0, can.width, can.height);
+   // ctx.clearRect(0, 0, rayCanvas.width, rayCanvas.height);
    // state.world.render({ ctx, canvas });
 
    state.obstacles.forEach((obstacle) => {
-      obstacle.render({ ctx, canvas });
+      obstacle.render({ ctx: ct, canvas: can });
    });
    // state.lines.forEach((line) => {
-   //    line.render(ctx);
+   //    line.render(ct);
    // });
    // ctx.globalCompositeOperation = 'source-in';
    state.bags.forEach((bag) => {
-      bag.render({ ctx, canvas });
+      bag.render({ ctx: ct, canvas: can });
    });
    // ctx.globalCompositeOperation = 'source-over';
-   state.player.render(state, { ctx, canvas });
+   state.player.render(ct);
+
+   ctx.drawImage(can, 0, 0);
+
+   ctx.globalCompositeOperation = 'destination-over';
+
+   ctx.fillStyle = '#908f9c';
+   ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+   ctx.globalCompositeOperation = 'source-over';
+   state.player.ui(ctx, canvas);
+
    detectMouseHoverOnElements(state);
-   // ctx.beginPath();
+
+   // // ctx.beginPath();
    // const pos = offset(mousePos());
    // ctx.arc(pos.x, pos.y, 2 * scale, 0, Math.PI * 2);
    // ctx.fillStyle = 'white';
    // ctx.fill();
 }
+
 let lastFrame = window.performance.now();
 (function run() {
    const delta = (window.performance.now() - lastFrame) / 1000;
@@ -116,8 +157,24 @@ let lastFrame = window.performance.now();
 })();
 
 function resize() {
-   canvas.width = window.innerWidth;
-   canvas.height = window.innerHeight;
+   canvas.width = window.innerWidth * window.devicePixelRatio;
+   canvas.height = window.innerHeight * window.devicePixelRatio;
+   can.width = window.innerWidth * window.devicePixelRatio;
+   can.height = window.innerHeight * window.devicePixelRatio;
+
+   canvas.style.width = `${window.innerWidth}px`;
+   canvas.style.height = `${window.innerHeight}px`;
+   can.style.width = `${window.innerWidth}px`;
+   can.style.height = `${window.innerHeight}px`;
+
+   function getScale() {
+      return (
+         Math.max(
+            window.innerHeight * window.devicePixelRatio,
+            window.innerWidth * window.devicePixelRatio * (9 / 16)
+         ) / 1000
+      );
+   }
 }
 
 function trackKeys(event) {
@@ -134,9 +191,9 @@ function trackKeys(event) {
    }
 }
 
-resize(canvas);
+resize();
 window.addEventListener('resize', () => {
-   resize(canvas);
+   resize();
 });
 window.addEventListener('mousemove', (event) => {
    gameState.player.targetAngle = Math.atan2(event.pageY - window.innerHeight / 2, event.pageX - window.innerWidth / 2);

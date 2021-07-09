@@ -6,8 +6,8 @@ export default class Line {
       this.end = new Vec(endX, endY);
    }
    render(ctx) {
-      ctx.strokeStyle = 'white';
-      ctx.lineWidth = strokeSize;
+      ctx.strokeStyle = 'rgb(147, 129, 86)';
+      ctx.lineWidth = strokeSize * 5;
       const start = offset(this.start);
       const end = offset(this.end);
       ctx.beginPath();

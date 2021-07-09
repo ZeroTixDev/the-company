@@ -52,7 +52,7 @@ export default class Bag extends Item {
       ctx.fillStyle = '#61440e';
       ctx.strokeStyle = '#261900';
       ctx.lineWidth = strokeSize * 2;
-      ctx.globalAlpha = 0.2;
+      ctx.globalAlpha = 0.8;
       const pos = this.renderPos();
       ctx.beginPath();
       ctx.arc(pos.x, pos.y, this.radius * scale, 0, Math.PI * 2);

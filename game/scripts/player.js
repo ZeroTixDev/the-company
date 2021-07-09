@@ -1,12 +1,11 @@
 import Vec from './vector.js';
-import Ray from './raycast.js';
 import Bag from './bag.js';
 
 const Status = {
-   Disguised: { color: '#9c9c9c', detection: 1 },
-   Conspicuous: { color: '#d9d9d9', detection: 1.5 },
+   Disguised: { color: '#ffffff', detection: 1 },
+   Conspicuous: { color: '#c4c4c4', detection: 1.5 },
    Distinguishable: { color: '#f05135', detection: 1.75 },
-   Suspicious: { color: '#bd0d0d', detection: 2 },
+   Suspicious: { color: '#f20f0f', detection: 2 },
 };
 
 export default class Player {
@@ -26,16 +25,19 @@ export default class Player {
       this.pickingUp = null;
       this.statusColor = Status[this.status].color;
       this.name = 'ZeroTix';
+      this.health = 100;
+      this.healthMax = 100;
+      this.armor = { health: 100 };
    }
    determineStatus(input) {
       let status = 'Disguised';
-      if (input.shift || this.carryingBag) {
+      if ((input.shift && (input.right - input.left !== 0 || input.down - input.up !== 0)) || this.carryingBag) {
          status = 'Conspicuous';
       }
       if (this.pickingUp) {
          status = 'Suspicious';
       }
-      if (input.shift && this.carryingBag) {
+      if (input.shift && (input.right - input.left !== 0 || input.down - input.up !== 0) && this.carryingBag) {
          status = 'Distinguishable';
       }
       if (Status[status] === undefined) {
@@ -100,8 +102,8 @@ export default class Player {
       this.vel.x = (input.right - input.left) * delta * this.speed;
       this.vel.y = (input.down - input.up) * delta * this.speed;
       if (input.shift) {
-         this.vel.x *= 1.5;
-         this.vel.y *= 1.5;
+         this.vel.x *= 1.7;
+         this.vel.y *= 1.7;
       }
       if (this.carryingBag) {
          this.vel.x *= 0.65;
@@ -178,19 +180,7 @@ export default class Player {
          this.pos.y = height - this.radius;
       }
    }
-   render({ lines }, { ctx, canvas }) {
-      const points = Ray.getPoints(this.pos, lines, this.radius);
-      ctx.fillStyle = 'rgb(160, 160, 160)';
-      ctx.beginPath();
-      ctx.globalAlpha = 0.05;
-      ctx.lineWidth = 20;
-      for (const { x, y } of points) {
-         const pos = offset({ x, y });
-         ctx.lineTo(pos.x, pos.y);
-      }
-      ctx.fill();
-      ctx.globalAlpha = 1;
-
+   render(ctx) {
       const pos = this.renderPos();
       ctx.save();
       ctx.translate(pos.x, pos.y);
@@ -229,6 +219,8 @@ export default class Player {
          ctx.stroke();
       }
       ctx.restore();
+   }
+   ui(ctx, canvas) {
       if (this.triggerText.length > 0) {
          ctx.fillStyle = this.triggerColor;
          ctx.textAlign = 'center';
@@ -237,8 +229,8 @@ export default class Player {
          ctx.save();
          ctx.shadowBlur = 0;
          ctx.shadowColor = 'black';
-         ctx.shadowOffsetX = 3;
-         ctx.shadowOffsetY = 3;
+         ctx.shadowOffsetX = 2;
+         ctx.shadowOffsetY = 2;
          ctx.fillText(this.triggerText, canvas.width / 2, canvas.height / 2 + canvas.height / 6);
          ctx.fillStyle = 'white';
          ctx.fillText(this.triggerItemName, canvas.width / 2, canvas.height / 2 - canvas.height / 6);
@@ -264,20 +256,45 @@ export default class Player {
             2 * scale
          ).fill();
       }
+
       ctx.fillStyle = 'white';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.font = `${20 * scale}px Harmattan`;
       ctx.save();
+      // ctx.fillText(this.name, this.renderPos().x, offset(new Vec(0, this.pos.y - this.radius * 1.6)).y);
+      ctx.font = `${50}px Harmattan`;
+      const width = ctx.measureText(this.status).width;
+      ctx.globalAlpha = 0.4;
+      ctx.fillStyle = 'black';
+      ctx.fillRect(0, canvas.height - 60, 40 + width, 60);
+      ctx.globalAlpha = 1;
       ctx.shadowBlur = 0;
       ctx.shadowColor = 'black';
-      ctx.shadowOffsetX = 1 * scale;
-      ctx.shadowOffsetY = 1 * scale;
-      // ctx.fillText(this.name, this.renderPos().x, offset(new Vec(0, this.pos.y - this.radius * 1.6)).y);
-      ctx.font = `${25 * scale}px Harmattan`;
+      ctx.shadowOffsetX = 2;
+      ctx.shadowOffsetY = 2;
+      // ctx.textAlign = 'alphabetic';
       ctx.fillStyle = this.statusColor;
-      ctx.fillText(this.status, this.renderPos().x, offset(new Vec(0, this.pos.y + this.radius * 1.8)).y);
+      ctx.fillText(this.status, 20 + width / 2, canvas.height - 25);
       ctx.restore();
+      ctx.fillStyle = 'rgb(28, 28, 28)';
+      ctx.fillRect(canvas.width - 400, canvas.height - 40, 300, 30);
+      ctx.fillStyle = 'rgba(28, 28, 28, 0.5)';
+      ctx.fillRect(canvas.width - 398, canvas.height - 38, 300, 30);
+      ctx.fillStyle = '#00fa3a';
+      ctx.fillRect(
+         canvas.width - 100 - (this.health / this.healthMax) * 300,
+         canvas.height - 25,
+         (this.health / this.healthMax) * 300,
+         15
+      );
+      ctx.fillStyle = '#407be3';
+      ctx.fillRect(
+         canvas.width - 100 - (this.armor.health / 100) * 300,
+         canvas.height - 41,
+         (this.armor.health / 100) * 300,
+         15
+      );
    }
 }
 
