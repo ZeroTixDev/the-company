@@ -7,6 +7,7 @@ const Status = {
    Distinguishable: { color: '#f05135', detection: 1.75 },
    Suspicious: { color: '#f20f0f', detection: 2 },
    Armed: { color: '#b31007', detection: 2.5 },
+   Intimidating: { color: '#d92e25', detection: 2.6 },
 };
 
 export default class Player {
@@ -77,6 +78,9 @@ export default class Player {
          const gun = this.currentSelectedGun === 'primary' ? this.primaryGun : this.secondaryGun;
          if (gun != null) {
             status = 'Armed';
+            if (zoomInTimer > 0.3) {
+               status = 'Intimidating';
+            }
          }
       }
       if (Status[status] === undefined) {

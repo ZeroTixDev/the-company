@@ -30,7 +30,7 @@ export default class Gun extends Item {
       return Math.sqrt(distX * distX + distY * distY) < this.radius + strokeSize * 2;
    }
    render({ ctx, canvas }) {
-      ctx.fillStyle = 'rgb(255, 255, 255)';
+      ctx.fillStyle = 'rgb(25, 25, 25)';
       ctx.strokeStyle = this.data?.color;
       ctx.lineWidth = strokeSize * 3;
       ctx.globalAlpha = 1;

@@ -78,6 +78,7 @@ window.strokeSize = 1;
 let camera = new Vec(gameState.player.pos.x, gameState.player.pos.y);
 window.mouseDown = false;
 window.zoomIn = false;
+window.zoomInTimer = 0;
 let mouse = new Vec(0, 0);
 let targetCamera = new Vec(gameState.player.pos.x, gameState.player.pos.y);
 window.scale = 1;
@@ -97,19 +98,32 @@ window.mousePos = function () {
 };
 
 function update(state, delta) {
+   delta = Math.min(delta, 1 / 30);
    if (zoomIn) {
-      targetScale = 0.9;
+      targetScale = 1.1 + Math.min(zoomInTimer / 2, 0.25);
    } else {
-      targetScale = 1.2;
+      targetScale = 1.1;
    }
 
-   scale += (targetScale - scale) * delta * 2;
+   scale += (targetScale - scale) * delta * 2.5;
 
    state.player.update(input, state, delta);
    state.items.forEach((item) => {
       item.update();
    });
 
+   if (zoomIn) {
+      zoomInTimer += delta;
+      // camera.x = state.player.pos.x;
+      // camera.y = state.player.pos.y;
+      // const pos = mousePos();
+      // camera.x += (pos.x - state.player.pos.x) * Math.min(zoomInTimer / 8, 4) * delta * 5;
+      // camera.y += (pos.y - state.player.pos.y) * Math.min(zoomInTimer / 8, 4) * delta * 5;
+   } else {
+      zoomInTimer = 0;
+   }
+   // camera.x += (state.player.pos.x - camera.x) * delta * 10;
+   // camera.y += (state.player.pos.y - camera.y) * delta * 10;
    camera.x = state.player.pos.x;
    camera.y = state.player.pos.y;
 }
@@ -261,6 +275,7 @@ window.addEventListener('mouseup', (event) => {
       mouseDown = false;
    } else if (event.button === 2) {
       zoomIn = false;
+      zoomInTimer = 0;
    }
 });
 window.addEventListener('wheel', (event) => {
