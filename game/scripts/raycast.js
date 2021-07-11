@@ -5,23 +5,7 @@ export default class Ray {
       this.direction = isDeg ? this.computeDirection(angle) : angle;
       this.pos = new Vec(x, y);
    }
-   static getPoints(pos, lines, radius) {
-      let points = [];
-      lines.forEach((line) => {
-         points.push(line.start.copy(), line.end.copy());
-      });
-
-      let pointSet = {};
-      let uniquePoints = points.filter((point) => {
-         const key = `${point.x},${point.y}`;
-         if (key in pointSet) {
-            return false;
-         } else {
-            pointSet[key] = true;
-            return true;
-         }
-      });
-
+   static getPoints(pos, uniquePoints, lines, radius) {
       let uniqueAngles = [];
       for (const point of uniquePoints) {
          const angle = Math.atan2(point.y - pos.y, point.x - pos.x);

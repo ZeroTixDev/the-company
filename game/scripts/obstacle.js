@@ -6,10 +6,10 @@ export default class Obstacle extends Rect {
       this.sat = new SAT.Box(new SAT.Vector(x, y), width, height).toPolygon();
    }
    render({ ctx, canvas }) {
-      const pos = offset({ x: this.x, y: this.y });
+      const pos = offset({ x: this.x, y: this.y }).round();
       ctx.fillStyle = backgroundColor;
       // ctx.fillRect(pos.x, pos.y, this.width * scale, this.height * scale);
-      ctx.strokeStyle = '#797985';
+      ctx.strokeStyle = '#15151c';
       ctx.lineWidth = strokeSize * 3.5;
       ctx.strokeRect(pos.x, pos.y, this.width * scale, this.height * scale);
    }

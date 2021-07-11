@@ -27,29 +27,49 @@ export default class Player {
       this.name = 'ZeroTix';
       this.health = 100;
       this.healthMax = 100;
-      this.armor = { health: 100 };
+      this.armor = { health: 0 };
       this.sprintBar = { amount: 100 };
-      this.sprintRate = 25;
+      this.sprintRate = 20;
+      this.notHoldingSprintTimer = 0;
+      this.primaryGun = null;
+      this.secondaryGun = null;
+      this.currentSelectedGun = 'primary';
+      this.selectedGun = false;
+      this.pickUpLock = false;
    }
-   determineStatus(input) {
+   togglePrimaryGun() {
+      const old = this.currentSelectedGun;
+      this.currentSelectedGun = 'primary';
+      if (this.primaryGun == null && this.secondaryGun != null) {
+         this.currentSelectedGun = 'secondary';
+      }
+      if (!this.selectedGun) {
+         this.selectedGun = true;
+      } else if (old === this.currentSelectedGun) {
+         this.selectedGun = false;
+      }
+   }
+   toggleSecondaryGun() {
+      const old = this.currentSelectedGun;
+      this.currentSelectedGun = 'secondary';
+      if (this.secondaryGun == null && this.primaryGun != null) {
+         this.currentSelectedGun = 'primary';
+      }
+      if (!this.selectedGun) {
+         this.selectedGun = true;
+      } else if (old === this.currentSelectedGun) {
+         this.selectedGun = false;
+      }
+   }
+   determineStatus(input, moved) {
       let status = 'Disguised';
-      if (
-         (input.shift &&
-            (input.right - input.left !== 0 || input.down - input.up !== 0) &&
-            this.sprintBar.amount > 0) ||
-         this.carryingBag
-      ) {
+      if ((input.shift && moved && this.sprintBar.amount > 0) || this.carryingBag) {
          status = 'Conspicuous';
       }
       if (this.pickingUp) {
          status = 'Suspicious';
       }
-      if (
-         input.shift &&
-         (input.right - input.left !== 0 || input.down - input.up !== 0) &&
-         this.sprintBar.amount > 0 &&
-         this.carryingBag
-      ) {
+      if (input.shift && moved && this.sprintBar.amount > 0 && this.carryingBag) {
          status = 'Distinguishable';
       }
       if (Status[status] === undefined) {
@@ -71,9 +91,12 @@ export default class Player {
       }
       return '';
    }
-   canPickUpItem(item) {
+   canPickUpItem(item, pickUpLock) {
       if (item.bag) {
          return !this.carryingBag;
+      }
+      if (item.gun) {
+         return !pickUpLock;
       }
       return false;
    }
@@ -89,10 +112,42 @@ export default class Player {
             }
          }
       }
+      if (item.gun) {
+         this.pickUpLock = true;
+         const newGun = item.copy();
+         array.splice(index, 1);
+         if (this.primaryGun == null) {
+            this.primaryGun = newGun;
+         } else if (this.secondaryGun == null) {
+            this.secondaryGun = newGun;
+         } else {
+            if (this.currentSelectedGun === 'primary') {
+               array.push(
+                  this.primaryGun.copy(
+                     new Vec(
+                        this.pos.x - Math.cos(this.angle) * this.radius * 1.5,
+                        this.pos.y - Math.sin(this.angle) * this.radius * 1.5
+                     )
+                  )
+               );
+               this.primaryGun = newGun;
+            } else if (this.currentSelectedGun === 'secondary') {
+               array.push(
+                  this.secondaryGun.copy(
+                     new Vec(
+                        this.pos.x - Math.cos(this.angle) * this.radius * 1.5,
+                        this.pos.y - Math.sin(this.angle) * this.radius * 1.5
+                     )
+                  )
+               );
+               this.secondaryGun = newGun;
+            }
+         }
+      }
    }
    dropBag(state) {
       if (!this.carryingBag) return;
-      state.bags.push(
+      state.items.push(
          new Bag(
             this.pos.x - Math.cos(this.angle) * this.radius * 1.5,
             this.pos.y - Math.sin(this.angle) * this.radius * 1.5,
@@ -109,18 +164,19 @@ export default class Player {
       //    this.angle -= 2 * Math.PI;
       // }
       // this.angle = lerp(this.angle, this.targetAngle, delta * this.angleRate);
+      let oldPos = this.pos.copy();
       this.angle = this.targetAngle;
 
       this.vel.x = (input.right - input.left) * delta * this.speed;
       this.vel.y = (input.down - input.up) * delta * this.speed;
+      if (input.shift) {
+         this.notHoldingSprintTimer = 0;
+      } else {
+         this.notHoldingSprintTimer += delta;
+      }
       if (input.shift && this.sprintBar.amount > 0) {
          this.vel.x *= 1.7;
          this.vel.y *= 1.7;
-         this.sprintBar.amount -= this.sprintRate * delta;
-         this.sprintBar.amount = Math.max(this.sprintBar.amount, 0);
-      } else if (!input.shift) {
-         this.sprintBar.amount += (this.sprintRate / 3) * delta;
-         this.sprintBar.amount = Math.min(this.sprintBar.amount, 100);
       }
       if (this.carryingBag) {
          this.vel.x *= 0.65;
@@ -138,15 +194,32 @@ export default class Player {
          obstacle.collide(this);
       });
 
+      const moved = !oldPos.same(this.pos);
+
+      if (input.shift && moved && this.sprintBar.amount > 0) {
+         this.sprintBar.amount -= (this.sprintRate / 2) * delta;
+         this.sprintBar.amount = Math.max(this.sprintBar.amount, 0);
+      } else if (!input.shift && this.notHoldingSprintTimer > 1) {
+         this.sprintBar.amount +=
+            (this.sprintRate / 3) *
+            (this.notHoldingSprintTimer > 2 ? Math.min(this.notHoldingSprintTimer / 2, 2) : 1) *
+            delta;
+         this.sprintBar.amount = Math.min(this.sprintBar.amount, 100);
+      }
+
+      if (!input.pickup) {
+         this.pickUpLock = false;
+      }
+
       // if (input.pickup) {
       let closest = null;
-      let type = null;
 
-      for (let i = 0; i < state.bags.length; i++) {
-         const bag = state.bags[i];
-         bag.pickingUp = false;
-         if (bag.collide(this)) {
-            type = 'bags';
+      for (let i = 0; i < state.items.length; i++) {
+         const item = state.items[i];
+         if (item.bag) {
+            item.pickingUp = false;
+         }
+         if (item.collide(this)) {
             closest = i;
          }
       }
@@ -155,30 +228,36 @@ export default class Player {
       this.triggerItemName = '';
       this.pickingUp = null;
       if (closest !== null) {
-         if (this.canPickUpItem(state[type][closest])) {
-            if (type === 'bags') {
+         if (this.canPickUpItem(state.items[closest])) {
+            if (state.items[closest].bag) {
                this.triggerText = `Hold [F] to carry`;
-               this.triggerColor = '#d4d4d4';
+               this.triggerColor = 'white';
                this.triggerItemName = 'Equipment Bag';
-            } else {
-               this.triggerText = 'UNKNOWN';
+            } else if (state.items[closest].gun) {
+               this.triggerText = `Hit [F] to take weapon`;
+               if (this.primaryGun !== null && this.secondaryGun !== null) {
+                  this.triggerText = `Hit [F] to swap weapon`;
+               }
+               this.triggerColor = 'white';
+               this.triggerItemName = state.items[closest].data.name;
             }
          }
-         if (input.pickup && this.canPickUpItem(state[type][closest])) {
-            this.pickingUp = true;
-            this.pickUp(state[type], closest, state[type][closest], delta);
-         } else if (!this.canPickUpItem(state[type][closest])) {
-            this.triggerText = this.whyCantPickUpItem(state[type][closest]);
+         if (input.pickup && this.canPickUpItem(state.items[closest], this.pickUpLock)) {
+            if (state.items[closest].hold) {
+               this.pickingUp = true;
+            }
+            this.pickUp(state.items, closest, state.items[closest], delta);
+         } else if (!this.canPickUpItem(state.items[closest])) {
+            this.triggerText = this.whyCantPickUpItem(state.items[closest]);
             this.triggerColor = 'gray';
-            if (type === 'bags') {
+            if (state.items[closest].bag) {
                this.triggerItemName = 'Equipment Bag';
-            } else {
-               this.triggerItemName = 'UNKNOWN';
+            } else if (state.items[closest].gun) {
+               this.triggerItemName = state.items[closest].data.name;
             }
          }
       }
-
-      const status = this.determineStatus(input);
+      const status = this.determineStatus(input, moved);
       this.status = status;
       this.statusColor = Status[this.status].color;
       // }
@@ -199,7 +278,7 @@ export default class Player {
    }
    render(ctx) {
       const pos = this.renderPos();
-      ctx.save();
+      // ctx.save();
       ctx.translate(pos.x, pos.y);
       ctx.rotate(this.angle + Math.PI / 2);
       ctx.lineWidth = strokeSize * 2;
@@ -209,15 +288,35 @@ export default class Player {
       ctx.arc(0, 0, this.radius * scale, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
-      ctx.beginPath();
-      ctx.strokeStyle = '#363636';
-      ctx.arc((-this.radius / 1.4) * scale, (-this.radius / 1.2) * scale, (this.radius / 3.2) * scale, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.arc((this.radius / 1.4) * scale, (-this.radius / 1.2) * scale, (this.radius / 3.2) * scale, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
+
+      //hands
+      const gun = this.currentSelectedGun === 'primary' ? this.primaryGun : this.secondaryGun;
+      if (this.selectedGun && gun != null && gun.data.render !== undefined) {
+         gun.data.render({ ctx, radius: this.radius, scale });
+      } else {
+         ctx.beginPath();
+         ctx.strokeStyle = '#363636';
+         ctx.arc(
+            (-this.radius / 1.4) * scale,
+            (-this.radius / 1.2) * scale,
+            (this.radius / 3.5) * scale,
+            0,
+            Math.PI * 2
+         );
+         ctx.fill();
+         ctx.stroke();
+         ctx.beginPath();
+         ctx.arc(
+            (this.radius / 1.4) * scale,
+            (-this.radius / 1.2) * scale,
+            (this.radius / 3.5) * scale,
+            0,
+            Math.PI * 2
+         );
+         ctx.fill();
+         ctx.stroke();
+      }
+
       if (this.bag !== null) {
          ctx.fillStyle = '#61440e';
          ctx.strokeStyle = '#261900';
@@ -235,7 +334,9 @@ export default class Player {
          ctx.fill();
          ctx.stroke();
       }
-      ctx.restore();
+      // ctx.restore();
+      ctx.rotate(-(this.angle + Math.PI / 2));
+      ctx.translate(-pos.x, -pos.y);
    }
    ui(ctx, canvas) {
       if (this.triggerText.length > 0) {
@@ -243,15 +344,15 @@ export default class Player {
          ctx.textAlign = 'center';
          ctx.textBaseline = 'middle';
          ctx.font = `${40}px Harmattan`;
-         ctx.save();
+         // ctx.save();
          ctx.shadowBlur = 0;
          ctx.shadowColor = 'black';
-         ctx.shadowOffsetX = 2;
-         ctx.shadowOffsetY = 2;
+         ctx.shadowOffsetX = 1.5;
+         ctx.shadowOffsetY = 1.5;
          ctx.fillText(this.triggerText, canvas.width / 2, canvas.height / 2 + canvas.height / 6);
          ctx.fillStyle = 'white';
          ctx.fillText(this.triggerItemName, canvas.width / 2, canvas.height / 2 - canvas.height / 6);
-         ctx.restore();
+         ctx.shadowColor = 'transparent';
       }
       if (this.pickingUp !== null) {
          ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
@@ -278,13 +379,12 @@ export default class Player {
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.font = `${20 * scale}px Harmattan`;
-      ctx.save();
       // ctx.fillText(this.name, this.renderPos().x, offset(new Vec(0, this.pos.y - this.radius * 1.6)).y);
       ctx.font = `${50}px Harmattan`;
-      const width = ctx.measureText(this.status).width;
+      const textWidth = ctx.measureText(this.status).width;
       ctx.globalAlpha = 0.4;
       ctx.fillStyle = 'black';
-      ctx.fillRect(0, canvas.height - 60, 40 + width, 60);
+      ctx.fillRect(0, canvas.height - 60, 40 + textWidth, 60);
       ctx.globalAlpha = 1;
       ctx.shadowBlur = 0;
       ctx.shadowColor = 'black';
@@ -292,34 +392,134 @@ export default class Player {
       ctx.shadowOffsetY = 2;
       // ctx.textAlign = 'alphabetic';
       ctx.fillStyle = this.statusColor;
-      ctx.fillText(this.status, 20 + width / 2, canvas.height - 25);
-      ctx.restore();
-      ctx.fillStyle = 'rgb(28, 28, 28)';
-      ctx.fillRect(canvas.width - 375, canvas.height - 40, 275, 15);
-      ctx.fillRect(canvas.width - 400, canvas.height - 25, 300, 15);
-      ctx.fillStyle = 'rgba(28, 28, 28, 0.5)';
-      // ctx.fillRect(canvas.width - 398, canvas.height - 38, 300, 30);
-      ctx.fillStyle = '#00fa3a';
-      ctx.fillRect(
-         canvas.width - 100 - (this.health / this.healthMax) * 300,
+      ctx.fillText(this.status, 20 + textWidth / 2, canvas.height - 25);
+      ctx.shadowColor = 'transparent';
+
+      // background of health and armor bar
+      ctx.fillStyle = 'rgba(20, 20, 20, 0.7)';
+      ctx.fillRect(canvas.width - 375, canvas.height - 45, 285, 20);
+      ctx.fillStyle = 'rgba(20, 20, 20)';
+      ctx.fillRect(canvas.width - 373, canvas.height - 25, 285, 2);
+      ctx.fillRect(canvas.width - 375 + 285, canvas.height - 43, 2, 18);
+
+      // health bar
+      const gradient = ctx.createLinearGradient(
+         canvas.width - 100 - (this.health / this.healthMax) * 285,
          canvas.height - 25,
-         (this.health / this.healthMax) * 300,
-         14
+         canvas.width - 100 - (this.health / this.healthMax) * 285 + (this.health / this.healthMax) * 285,
+         canvas.height - 25
       );
-      ctx.fillStyle = '#407be3';
+      gradient.addColorStop(0, '#178527');
+      gradient.addColorStop(0.5, '#43bf56');
+      gradient.addColorStop(1, '#178527');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(
+         canvas.width - 100 - (this.health / this.healthMax) * 275,
+         canvas.height - 35,
+         (this.health / this.healthMax) * 285,
+         10
+      );
+      ctx.fillStyle = '#006aff';
       ctx.fillRect(
          canvas.width - 100 - (this.armor.health / 100) * 275,
-         canvas.height - 40,
-         (this.armor.health / 100) * 275,
-         14
+         canvas.height - 45,
+         (this.armor.health / 100) * 285,
+         10
+      );
+
+      // sprint bar
+      ctx.fillStyle = 'rgba(50, 50, 50)';
+      ctx.fillRect(
+         canvas.width - 100 - (this.sprintBar.amount / 100) * 225,
+         canvas.height - 53,
+         (this.sprintBar.amount / 100) * 237,
+         6
       );
       ctx.fillStyle = 'white';
       ctx.fillRect(
-         canvas.width - 100 - (this.sprintBar.amount / 100) * 250,
-         canvas.height - 50,
-         (this.sprintBar.amount / 100) * 250,
-         10
+         canvas.width - 100 - (this.sprintBar.amount / 100) * 225,
+         canvas.height - 56,
+         (this.sprintBar.amount / 100) * 235,
+         6
       );
+
+      // gun
+      ctx.font = `${30}px Harmattan`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = 'white';
+      ctx.shadowBlur = 0;
+      ctx.shadowColor = 'black';
+      ctx.shadowOffsetX = 1.5;
+      ctx.shadowOffsetY = 1.5;
+      const width = 80;
+      const height = 25;
+      const radius = height / 2;
+      // if only have one weapon
+      if (
+         (this.primaryGun == null && this.secondaryGun != null) ||
+         (this.primaryGun != null && this.secondaryGun == null)
+      ) {
+         const gun = this.primaryGun == null ? this.secondaryGun : this.primaryGun;
+         if (!this.selectedGun) {
+            ctx.fillText(gun.data.name, canvas.width - 200 + 100 / 2, canvas.height - 70);
+         } else {
+            ctx.fillStyle = 'white';
+            ctx.shadowColor = 'transparent';
+            ctx.fillRect(canvas.width - 200 + 100 / 2 - width / 2, canvas.height - 74 - height / 2, width, height);
+            ctx.beginPath();
+            ctx.arc(canvas.width - 200 + 100 / 2 - width / 2, canvas.height - 74, radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(canvas.width - 200 + 100 / 2 + width / 2, canvas.height - 74, radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = 'rgba(0, 0, 0, 1)';
+            ctx.fillText(gun.data.name, canvas.width - 200 + 100 / 2, canvas.height - 70);
+         }
+      }
+      ctx.fillStyle = 'white';
+      // if you have two guns
+      if (this.primaryGun != null && this.secondaryGun != null) {
+         if (this.currentSelectedGun === 'secondary' && this.selectedGun) {
+            ctx.shadowColor = 'transparent';
+            ctx.fillRect(canvas.width - 200 + 100 / 2 - width / 2, canvas.height - 74 - height / 2, width, height);
+            ctx.beginPath();
+            ctx.arc(canvas.width - 200 + 100 / 2 - width / 2, canvas.height - 74, radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(canvas.width - 200 + 100 / 2 + width / 2, canvas.height - 74, radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = 'rgba(0, 0, 0, 1)';
+            ctx.fillText(this.secondaryGun.data.name, canvas.width - 200 + 100 / 2, canvas.height - 70);
+         } else {
+            ctx.fillStyle = 'white';
+            ctx.shadowOffsetX = 1.5;
+            ctx.shadowOffsetY = 1.5;
+            ctx.fillText(this.secondaryGun.data.name, canvas.width - 200 + 100 / 2, canvas.height - 70);
+         }
+         if (this.currentSelectedGun === 'primary' && this.selectedGun) {
+            ctx.shadowColor = 'transparent';
+            ctx.fillRect(canvas.width - 210 - 100 / 2 - width / 2, canvas.height - 74 - height / 2, width, height);
+            ctx.beginPath();
+            ctx.arc(canvas.width - 210 - 100 / 2 - width / 2, canvas.height - 74, radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(canvas.width - 210 - 100 / 2 + width / 2, canvas.height - 74, radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = 'rgba(0, 0, 0, 1)';
+            ctx.fillText(this.primaryGun.data.name, canvas.width - 210 - 100 / 2, canvas.height - 70);
+         } else {
+            ctx.shadowOffsetX = 1.5;
+            ctx.shadowOffsetY = 1.5;
+            ctx.fillStyle = 'white';
+            ctx.fillText(this.primaryGun.data.name, canvas.width - 210 - 100 / 2, canvas.height - 70);
+         }
+      }
+      // if you have no guns
+      if (this.primaryGun == null && this.secondaryGun == null) {
+         ctx.fillText('---', canvas.width - 200 + 100 / 2, canvas.height - 70);
+      }
+      ctx.shadowColor = 'transparent';
    }
 }
 

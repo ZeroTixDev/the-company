@@ -4,12 +4,14 @@ import Vec from '../scripts/vector.js';
 import Bag from '../scripts/bag.js';
 import Obstacle from '../scripts/obstacle.js';
 import Ray from '../scripts/raycast.js';
+import Gun from '../scripts/gun.js';
 
 const canvas = document.querySelector('.game-canvas');
 const can = document.createElement('canvas');
 const ct = can.getContext('2d');
-// const rayCanvas = document.querySelector('.raycast-canvas');
-// const rayCtx = rayCanvas.getContext('2d');
+const stats = new Stats();
+stats.showPanel(0);
+document.body.appendChild(stats.dom);
 const ctx = canvas.getContext('2d');
 const input = { up: false, down: false, right: false, left: false, pickup: false, shift: false };
 const controls = {
@@ -25,6 +27,8 @@ const controls = {
    ShiftLeft: { key: 'shift' },
    ShiftRight: { key: 'shift' },
    KeyG: { action: 'drop-bag' },
+   Digit1: { action: 'primary-gun' },
+   Digit2: { action: 'secondary-gun' },
 };
 window.gameState = {
    player: new Player(100, 100, 35, 250),
@@ -35,12 +39,19 @@ window.gameState = {
       new Obstacle(0, 1000, 1500, 0),
       new Obstacle(1500, 0, 0, 1000),
       new Obstacle(1150, 250, 100, 100),
-      new Obstacle(0, 200, 700, 0),
+      new Obstacle(0, 600, 700, 0),
       new Obstacle(900, 0, 100, 600),
       new Obstacle(400, 400, 500, 0),
       new Obstacle(500, 875, 800, 100),
    ],
-   bags: [new Bag(800, 500, null), new Bag(500, 100, null)],
+   items: [
+      new Bag(800, 500, null),
+      new Bag(500, 500, null),
+      new Gun(200, 200, 'Cz45'),
+      new Gun(300, 200, 'Cz45'),
+      new Gun(400, 200, 'Spas12'),
+      new Gun(600, 200, 'Spas12'),
+   ],
 };
 gameState.lines = [...gameState.world.lines()];
 gameState.obstacles.forEach((obstacle) => {
@@ -48,11 +59,27 @@ gameState.obstacles.forEach((obstacle) => {
       gameState.lines.push(line);
    });
 });
+
+let points = [];
+gameState.lines.forEach((line) => {
+   points.push(line.start.copy(), line.end.copy());
+});
+let pointSet = {};
+window.uniquePoints = points.filter((point) => {
+   const key = `${point.x},${point.y}`;
+   if (key in pointSet) {
+      return false;
+   } else {
+      pointSet[key] = true;
+      return true;
+   }
+});
 window.strokeSize = 1;
 const camera = new Vec(gameState.player.pos.x, gameState.player.pos.y);
+window.mouseDown = false;
 const mouse = new Vec(0, 0);
 window.scale = 1.2;
-window.backgroundColor = '#aba9c4';
+window.backgroundColor = '#8d8d99';
 
 window.offset = function ({ x, y }) {
    return new Vec(
@@ -68,39 +95,39 @@ window.mousePos = function () {
 
 function update(state, delta) {
    state.player.update(input, state, delta);
-   state.bags.forEach((bag) => {
-      bag.update();
+   state.items.forEach((item) => {
+      item.update();
    });
    camera.x = state.player.pos.x;
    camera.y = state.player.pos.y;
 }
 
-function detectMouseHoverOnElements(state) {
-   const pos = mousePos();
-   let selected = null;
-   let type = null;
+// function detectMouseHoverOnElements(state) {
+//    const pos = mousePos();
+//    let selected = null;
+//    let type = null;
 
-   for (let i = 0; i < state.bags.length; i++) {
-      if (state.bags[i].intersects(pos)) {
-         selected = i;
-         type = 'bags';
-      }
-   }
-   if (selected === null) return;
-   state[type][selected].showHoverData(ctx);
-}
+//    for (let i = 0; i < state.bags.length; i++) {
+//       if (state.bags[i].intersects(pos)) {
+//          selected = i;
+//          type = 'bags';
+//       }
+//    }
+//    if (selected === null) return;
+//    state[type][selected].showHoverData(ctx);
+// }
 
 function render(state) {
    // ctx.globalCompositeOperation = 'source-over';
    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-   const points = Ray.getPoints(state.player.pos, state.lines, state.player.radius);
+   const points = Ray.getPoints(state.player.pos, uniquePoints, state.lines, state.player.radius);
    ctx.fillStyle = '#aba9c4';
    ctx.beginPath();
    ctx.globalAlpha = 1;
    ctx.lineWidth = 20;
    for (const { x, y } of points) {
-      const pos = offset({ x, y });
+      const pos = offset({ x, y }).round();
       ctx.lineTo(pos.x, pos.y);
    }
    ctx.fill();
@@ -109,7 +136,7 @@ function render(state) {
    // ctx.globalCompositeOperation = 'destination-in';
 
    ctx.globalCompositeOperation = 'source-in';
-   ct.clearRect(0, 0, can.width, can.height);
+   // ct.clearRect(0, 0, can.width, can.height);
    ct.fillStyle = backgroundColor;
    ct.fillRect(0, 0, can.width, can.height);
    // ctx.clearRect(0, 0, rayCanvas.width, rayCanvas.height);
@@ -122,23 +149,23 @@ function render(state) {
    //    line.render(ct);
    // });
    // ctx.globalCompositeOperation = 'source-in';
-   state.bags.forEach((bag) => {
-      bag.render({ ctx: ct, canvas: can });
+   state.items.forEach((item) => {
+      item.render({ ctx: ct, canvas: can });
    });
    // ctx.globalCompositeOperation = 'source-over';
-   state.player.render(ct);
-
-   ctx.drawImage(can, 0, 0);
+   ctx.imageSmoothingQuality = 'low';
+   ctx.drawImage(can, 0, 0, can.width, can.height);
 
    ctx.globalCompositeOperation = 'destination-over';
 
-   ctx.fillStyle = '#908f9c';
+   ctx.fillStyle = '#31303b';
    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
    ctx.globalCompositeOperation = 'source-over';
+   state.player.render(ctx);
    state.player.ui(ctx, canvas);
 
-   detectMouseHoverOnElements(state);
+   // detectMouseHoverOnElements(state);
 
    // // ctx.beginPath();
    // const pos = offset(mousePos());
@@ -149,10 +176,12 @@ function render(state) {
 
 let lastFrame = window.performance.now();
 (function run() {
+   stats.begin();
    const delta = (window.performance.now() - lastFrame) / 1000;
    lastFrame = window.performance.now();
    update(gameState, delta);
    render(gameState);
+   stats.end();
    requestAnimationFrame(run);
 })();
 
@@ -183,9 +212,15 @@ function trackKeys(event) {
       if (controls[event.code].key !== undefined) {
          input[controls[event.code].key] = event.type === 'keydown';
       }
-      if (controls[event.code].action !== undefined) {
+      if (controls[event.code].action !== undefined && event.type === 'keydown') {
          if (controls[event.code].action === 'drop-bag') {
             gameState.player.dropBag(gameState);
+         }
+         if (controls[event.code].action === 'primary-gun') {
+            gameState.player.togglePrimaryGun();
+         }
+         if (controls[event.code].action === 'secondary-gun') {
+            gameState.player.toggleSecondaryGun();
          }
       }
    }
@@ -199,6 +234,14 @@ window.addEventListener('mousemove', (event) => {
    gameState.player.targetAngle = Math.atan2(event.pageY - window.innerHeight / 2, event.pageX - window.innerWidth / 2);
    mouse.x = event.pageX;
    mouse.y = event.pageY;
+});
+window.addEventListener('mousedown', (event) => {
+   event.preventDefault();
+   mouseDown = true;
+});
+window.addEventListener('mouseup', (event) => {
+   event.preventDefault();
+   mouseDown = false;
 });
 window.addEventListener('wheel', (event) => {
    window.scale -= Math.sign(event.deltaY) * 0.3;

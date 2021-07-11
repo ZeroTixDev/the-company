@@ -10,6 +10,12 @@ export default class Vec {
       this.x += vec.x;
       this.y += vec.y;
    }
+   round() {
+      return new Vec(Math.round(this.x), Math.round(this.y));
+   }
+   same(pos) {
+      return this.x === pos.x && this.y === pos.y;
+   }
    copy() {
       return new Vec(this.x, this.y);
    }
