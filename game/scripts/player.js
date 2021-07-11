@@ -6,6 +6,7 @@ const Status = {
    Conspicuous: { color: '#c4c4c4', detection: 1.5 },
    Distinguishable: { color: '#f05135', detection: 1.75 },
    Suspicious: { color: '#f20f0f', detection: 2 },
+   Armed: { color: '#b31007', detection: 2.5 },
 };
 
 export default class Player {
@@ -71,6 +72,12 @@ export default class Player {
       }
       if (input.shift && moved && this.sprintBar.amount > 0 && this.carryingBag) {
          status = 'Distinguishable';
+      }
+      if (this.selectedGun) {
+         const gun = this.currentSelectedGun === 'primary' ? this.primaryGun : this.secondaryGun;
+         if (gun != null) {
+            status = 'Armed';
+         }
       }
       if (Status[status] === undefined) {
          throw new Error(`Did not define ${status} in Status`);
