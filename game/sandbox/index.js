@@ -75,10 +75,13 @@ window.uniquePoints = points.filter((point) => {
    }
 });
 window.strokeSize = 1;
-const camera = new Vec(gameState.player.pos.x, gameState.player.pos.y);
+let camera = new Vec(gameState.player.pos.x, gameState.player.pos.y);
 window.mouseDown = false;
-const mouse = new Vec(0, 0);
-window.scale = 1.2;
+window.zoomIn = false;
+let mouse = new Vec(0, 0);
+let targetCamera = new Vec(gameState.player.pos.x, gameState.player.pos.y);
+window.scale = 1;
+window.targetScale = 1.2;
 window.backgroundColor = '#8d8d99';
 
 window.offset = function ({ x, y }) {
@@ -94,10 +97,19 @@ window.mousePos = function () {
 };
 
 function update(state, delta) {
+   if (zoomIn) {
+      targetScale = 0.9;
+   } else {
+      targetScale = 1.2;
+   }
+
+   scale += (targetScale - scale) * delta * 2;
+
    state.player.update(input, state, delta);
    state.items.forEach((item) => {
       item.update();
    });
+
    camera.x = state.player.pos.x;
    camera.y = state.player.pos.y;
 }
@@ -237,11 +249,19 @@ window.addEventListener('mousemove', (event) => {
 });
 window.addEventListener('mousedown', (event) => {
    event.preventDefault();
-   mouseDown = true;
+   if (event.button === 0) {
+      mouseDown = true;
+   } else if (event.button === 2) {
+      zoomIn = true;
+   }
 });
 window.addEventListener('mouseup', (event) => {
    event.preventDefault();
-   mouseDown = false;
+   if (event.button === 0) {
+      mouseDown = false;
+   } else if (event.button === 2) {
+      zoomIn = false;
+   }
 });
 window.addEventListener('wheel', (event) => {
    window.scale -= Math.sign(event.deltaY) * 0.3;
