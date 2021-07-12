@@ -1,7 +1,9 @@
 const ref = {
    loadingScreen: '.loading',
    gameScreen: '.game',
+   overlay: '.overlay',
    startDiv: '.start',
+   guestButton: '.guest',
    fadeCanvas: '.fade-canvas',
 };
 

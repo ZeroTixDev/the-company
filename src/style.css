@@ -7,6 +7,7 @@
 body {
    font-size: 16px;
    font-family: 'Harmattan', sans-serif;
+   background-color: #3b3542;
 }
 
 canvas {
@@ -15,60 +16,80 @@ canvas {
    top: 0;
 }
 
-.loading,
-.start {
+.overlay,
+.start,
+.loading {
    position: absolute;
    left: 0;
    top: 0;
    width: 100vw;
    height: 100vh;
-   background-color: rgba(77, 77, 77, 0);
-   color: white;
+   background-color: #3b3542;
+}
+
+.start {
    display: flex;
-   justify-content: flex-end;
-   align-items: flex-end;
-   padding-right: 50px;
-   font-size: 6rem;
-   z-index: 5000;
+   justify-content: center;
+   align-items: center;
+   z-index: 1000000;
+}
+
+.loading {
+   font-size: 4.5rem;
+   color: white;
+   z-index: 1000;
+}
+
+.game {
+   position: absolute;
+   left: 0;
+   top: 0;
+   width: 100vw;
+   height: 100vh;
+   background-color: #423735;
+}
+
+.loading .text {
+   position: absolute;
+   right: 60px;
+   bottom: 0px;
+}
+
+button {
+   box-shadow: 3px 3px 0px rgb(24, 24, 24);
+   padding: 40px;
+   transform: scale(0.8);
+   color: white;
+   background-color: rgba(0, 0, 0, 0.5);
+   font-size: 3rem;
+   border: none;
+   outline: none;
+   cursor: pointer;
+   transition: background-color 0.2s linear;
+}
+button:hover {
+   background-color: rgba(255, 255, 255, 0.1);
+}
+
+.start-animation {
+   animation: startAnim 1s ease-in-out;
+}
+
+@keyframes startAnim {
+   0% {
+      left: 0;
+   }
+   100% {
+      left: -100vw;
+   }
 }
 
 .fade-canvas {
    z-index: 100000000;
 }
 
-.start .press-space {
-   font-size: 4rem;
-   text-align: center;
-   display: flex;
-   justify-content: center;
-   align-items: center;
-   position: absolute;
-   left: 50%;
-   top: 50%;
-   transform: translateX(-50%) translateY(-50%);
-   transform-origin: center center;
-   animation: bigAndSmall 2s ease-in-out infinite;
-}
-
-@keyframes bigAndSmall {
-   0% {
-      transform: translateX(-50%) translateY(-50%) scale(1);
-   }
-   50% {
-      transform: translateX(-50%) translateY(-50%) scale(1.2);
-   }
-   100% {
-      transform: translateX(-50%) translateY(-50%) scale(1);
-   }
-}
-
-.disappear {
-   transition: opacity 0.2s ease-in-out;
-   opacity: 0;
-}
-
 .text {
-   filter: drop-shadow(5px 5px 0px rgb(24, 24, 24));
+   filter: drop-shadow(3px 3px 0px rgb(0, 0, 0));
    pointer-events: none;
    user-select: none;
 }
