@@ -40,7 +40,7 @@ export default class Gun extends Item {
       ctx.beginPath();
       ctx.arc(pos.x, pos.y, this.radius * scale, 0, Math.PI * 2);
       ctx.fill();
-      ctx.stroke();
+      // ctx.stroke();
       ctx.globalAlpha = 1;
       if (this.data?.image) {
          ctx.imageSmoothingQuality = 'high';

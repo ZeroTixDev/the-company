@@ -1,16 +1,10 @@
 export default function getSounds() {
    return {
       menu: {
-         songs: [
-            'fight-or-flight',
-            'dangerous-mission',
-            'fuel-to-the-fire',
-            'infiltration-attempt',
-            'rescue-operation',
-            'phoenix-rising',
-         ],
+         songs: ['rescue-operation', 'infiltration-attempt', 'infiltration-attempt-ambient'],
          random: true,
          for: 'menu',
+         volume: 0.15,
       },
    };
 }

@@ -5,10 +5,19 @@ export default class Ray {
       this.direction = isDeg ? this.computeDirection(angle) : angle;
       this.pos = new Vec(x, y);
    }
-   static getPoints(pos, uniquePoints, lines, radius) {
+   changeAngle(angle) {
+      this.direction = angle;
+   }
+   static getPoints(pos, uniquePoints, lines, radius, limitAngle = [-Math.PI * 2, Math.PI * 2], viewRadius = Infinity) {
       let uniqueAngles = [];
       for (const point of uniquePoints) {
-         const angle = Math.atan2(point.y - pos.y, point.x - pos.x);
+         let angle = Math.atan2(point.y - pos.y, point.x - pos.x);
+         if (angle < limitAngle[0]) {
+            angle = limitAngle[0];
+         }
+         if (angle > limitAngle[1]) {
+            angle = limitAngle[1];
+         }
          uniqueAngles.push(angle - 0.00001, angle, angle + 0.00001);
       }
 
@@ -18,8 +27,12 @@ export default class Ray {
          ray.direction = new Vec(Math.cos(angle), Math.sin(angle));
          ray.pos.x += Math.cos(angle) * radius;
          ray.pos.y += Math.sin(angle) * radius;
-         const intersectionPoint = ray.findClosestLine(lines);
-         if (intersectionPoint !== null) {
+         const intersectionPoint = ray.findSecondClosestLine(lines);
+         if (intersectionPoint != null || intersectionPoint != undefined) {
+            const dist = intersectionPoint.dist(pos);
+            if (dist > viewRadius) {
+               continue;
+            }
             intersectionPoint.angle = angle;
             intersectionPoints.push(intersectionPoint);
          }
@@ -31,10 +44,29 @@ export default class Ray {
 
       return intersectionPoints;
    }
+   findSecondClosestLine(lines) {
+      let bestDistance = Infinity;
+      let bestPos = null;
+      let hits = [];
+      for (let i = 0; i < lines.length; i++) {
+         const line = lines[i];
+         const point = this.cast(line);
+         if (!point) continue;
+         hits.push(point);
+      }
+      hits = hits.sort((a, b) => {
+         return this.pos.dist(a) - this.pos.dist(b);
+      });
+      if (hits.length >= 2) {
+         return hits[1];
+      }
+      return null;
+   }
    findClosestLine(lines) {
       let bestDistance = Infinity;
       let bestPos = null;
-      for (const line of lines) {
+      for (let i = 0; i < lines.length; i++) {
+         const line = lines[i];
          const point = this.cast(line);
          if (!point) continue;
          const distance = this.pos.dist(point);

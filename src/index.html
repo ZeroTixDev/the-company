@@ -10,9 +10,17 @@
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
       <link href="https://fonts.googleapis.com/css2?family=Harmattan&display=swap" rel="stylesheet" />
+      <script
+         src="https://cdnjs.cloudflare.com/ajax/libs/sat/0.9.0/SAT.min.js"
+         integrity="sha512-I/Whsg25W/NpxpNL5dXAySa7JMz/r0ibfrqaTUTT97m2ggJAYbiioXaqL5hfoXmZ1CsvXaPyLKrwe3sSem20/A=="
+         crossorigin="anonymous"
+         referrerpolicy="no-referrer"
+         defer
+      ></script>
+      <script src="//mrdoob.github.io/stats.js/build/stats.min.js" defer></script>
       <script src="index.js" type="module" defer></script>
    </head>
-   <body>
+   <body oncontextmenu="return false">
       <div class="overlay"></div>
       <div class="start hidden">
          <button class="guest"><span class="text">Play as Guest</span></button>
@@ -20,10 +28,12 @@
       <div class="loading hidden">
          <span class="text">Loading...</span>
       </div>
+      <div class="menu hidden">
+         <span class="title"><span class="text">The Company</span><button class="sandbox">Sandbox</button></span>
+      </div>
       <div class="game hidden">
          <canvas class="game-canvas"></canvas>
       </div>
-      <div class="loading-canvas-div"></div>
-      <canvas class="fade-canvas"></canvas>
+      <canvas class="fade-canvas hidden"></canvas>
    </body>
 </html>

@@ -1,12 +1,15 @@
 export default class Soundtrack {
    constructor(data = {}) {
       this.inherit(data);
+      this.loadedEverything = false;
       if (this.songs === undefined) {
          throw new Error(`Tried to make a soundtrack but could not retrieved sounds, data object -> ${data}`);
       }
+      this.startLoadingTime = window.performance.now();
       this.songs.forEach((song) => {
          function onLoad() {
             song.audio.removeEventListener('canplaythrough', onLoad);
+            song.audio.volume = this.volume;
             let isEverythingLoadedNow = true;
             for (const otherSong of this.songs) {
                if (otherSong.name === song.name) continue;
@@ -14,7 +17,14 @@ export default class Soundtrack {
                   isEverythingLoadedNow = false;
                }
             }
-            if (isEverythingLoadedNow) {
+            if (isEverythingLoadedNow && !this.loadedEverything) {
+               this.loadedEverything = true;
+               console.log(
+                  this.for,
+                  'loading time',
+                  Math.round(window.performance.now() - this.startLoadingTime),
+                  'ms'
+               );
                setTimeout(() => {
                   this.onload();
                }, 1000);
@@ -23,24 +33,27 @@ export default class Soundtrack {
          }
          song.audio.addEventListener('canplaythrough', onLoad.bind(this));
       });
-      this.lastSongIndex = this.for === 'menu' ? Number(localStorage.getItem('menuSongIndex')) : null;
+      this.lastSongIndex = null;
    }
    generateSongIndex() {
       return window.random(0, this.songs.length - 1);
+   }
+   stop() {
+      if (this.lastSongIndex === null) return;
+      this.songs[this.lastSongIndex].audio.currentTime = 0;
+      this.songs[this.lastSongIndex].audio.pause();
    }
    play() {
       if (this.random) {
          const songIndex = this.lastSongIndex === null ? this.generateSongIndex() : this.getUniqueSongIndex();
          this.lastSongIndex = songIndex;
-         if (this.for === 'menu') {
-            localStorage.setItem('menuSongIndex', this.lastSongIndex);
-         }
          this.songs[songIndex].play();
          this.songs[songIndex].audio.playbackRate = 1;
          this.songs[songIndex].audio.addEventListener('ended', onEnd.bind(this));
+         console.log('playing', this.songs[songIndex].name);
          function onEnd() {
             this.songs[songIndex].audio.removeEventListener('ended', onEnd);
-            this.songs[songIndex].audio.currentTime = 0;
+            this.songs[songIndex].stop();
             this.play();
          }
       }

@@ -1,10 +1,12 @@
 const ref = {
    loadingScreen: '.loading',
    gameScreen: '.game',
+   menuScreen: '.menu',
    overlay: '.overlay',
    startDiv: '.start',
    guestButton: '.guest',
    fadeCanvas: '.fade-canvas',
+   sandboxButton: '.sandbox',
 };
 
 for (const key of Object.keys(ref)) {

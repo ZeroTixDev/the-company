@@ -1,5 +1,7 @@
 import Vec from './vector.js';
 import Bag from './bag.js';
+import Bullet from './bullet.js';
+import Ray from './raycast.js';
 
 const Status = {
    Disguised: { color: '#ffffff', detection: 1 },
@@ -14,6 +16,7 @@ export default class Player {
    constructor(x, y, radius, speed) {
       this.pos = new Vec(x, y);
       this.vel = new Vec(0, 0);
+      this.recoil = new Vec(0, 0);
       this.radius = radius;
       this.speed = speed;
       this.angle = 0;
@@ -29,7 +32,7 @@ export default class Player {
       this.name = 'ZeroTix';
       this.health = 100;
       this.healthMax = 100;
-      this.armor = { health: 0 };
+      this.armor = { health: 100 };
       this.sprintBar = { amount: 100 };
       this.sprintRate = 20;
       this.notHoldingSprintTimer = 0;
@@ -38,6 +41,22 @@ export default class Player {
       this.currentSelectedGun = 'primary';
       this.selectedGun = false;
       this.pickUpLock = false;
+      this.reload = 0;
+      this.laser = new Ray(this.pos.x, this.pos.y, this.angle);
+      this.laserEnd = new Vec(0, 0);
+      this.shouldShoot = false;
+   }
+   get holdingGun() {
+      if (!this.selectedGun) return false;
+      const gun = this.currentSelectedGun === 'primary' ? this.primaryGun : this.secondaryGun;
+      if (gun) {
+         return true;
+      }
+      return false;
+   }
+   get currentGun() {
+      const gun = this.currentSelectedGun === 'primary' ? this.primaryGun : this.secondaryGun;
+      return gun;
    }
    togglePrimaryGun() {
       const old = this.currentSelectedGun;
@@ -177,6 +196,7 @@ export default class Player {
       // this.angle = lerp(this.angle, this.targetAngle, delta * this.angleRate);
       let oldPos = this.pos.copy();
       this.angle = this.targetAngle;
+      this.reload -= delta;
 
       this.vel.x = (input.right - input.left) * delta * this.speed;
       this.vel.y = (input.down - input.up) * delta * this.speed;
@@ -197,12 +217,19 @@ export default class Player {
          this.vel.x = 0;
          this.vel.y = 0;
       }
+      this.recoil.x *= Math.pow(0.6, delta * 10);
+      this.recoil.y *= Math.pow(0.6, delta * 10);
       this.pos.add(this.vel);
+      this.pos.add(this.recoil);
 
       this.boundFromWorld(state.world);
 
       state.obstacles.forEach((obstacle) => {
          obstacle.collide(this);
+      });
+
+      state.doors.forEach((door) => {
+         door.collide(this);
       });
 
       const moved = !oldPos.same(this.pos);
@@ -233,6 +260,14 @@ export default class Player {
          if (item.collide(this)) {
             closest = i;
          }
+      }
+
+      if (
+         this.shouldShoot ||
+         (mouseDown && this.selectedGun && this.currentGun != null && this.currentGun.data.automatic)
+      ) {
+         this.shouldShoot = false;
+         this.shoot(state);
       }
 
       this.triggerText = '';
@@ -271,6 +306,17 @@ export default class Player {
       const status = this.determineStatus(input, moved);
       this.status = status;
       this.statusColor = Status[this.status].color;
+
+      this.laser.pos.x = this.pos.x;
+      this.laser.pos.y = this.pos.y;
+      // this.laser.changeAngle(this.angle);
+      this.laser.direction = new Vec(Math.cos(this.angle), Math.sin(this.angle));
+
+      const point = this.laser.findClosestLine(state.lines);
+      if (point) {
+         this.laserEnd.x = point.x;
+         this.laserEnd.y = point.y;
+      }
       // }
    }
    boundFromWorld({ width, height }) {
@@ -289,6 +335,15 @@ export default class Player {
    }
    render(ctx) {
       const pos = this.renderPos();
+
+      if (this.holdingGun && window.showLaser) {
+         ctx.strokeStyle = '#f00000';
+         ctx.lineWidth = 2 * scale;
+         ctx.beginPath();
+         ctx.lineTo(pos.x, pos.y);
+         ctx.lineTo(offset(this.laserEnd).x, offset(this.laserEnd).y);
+         ctx.stroke();
+      }
       // ctx.save();
       ctx.translate(pos.x, pos.y);
       ctx.rotate(this.angle + Math.PI / 2);
@@ -348,6 +403,25 @@ export default class Player {
       // ctx.restore();
       ctx.rotate(-(this.angle + Math.PI / 2));
       ctx.translate(-pos.x, -pos.y);
+   }
+   shoot(state) {
+      if (!this.selectedGun) return;
+      if (this.reload > 0) return;
+      const gun = this.currentSelectedGun === 'primary' ? this.primaryGun : this.secondaryGun;
+      if (gun === null) return;
+      if (gun.data.bulletSpawn === undefined) {
+         state.bullets.push(new Bullet(this.pos, this.angle, gun.type));
+      } else {
+         const arr = gun.data.bulletSpawn(this.pos, this.radius, this.angle);
+         for (const { pos, angle } of arr) {
+            state.bullets.push(new Bullet(Vec.from(pos), angle, gun.type));
+         }
+      }
+      if (gun.data.recoil !== undefined) {
+         this.recoil.x += Math.cos(this.angle) * -gun.data.recoil;
+         this.recoil.y += Math.sin(this.angle) * -gun.data.recoil;
+      }
+      this.reload = gun.data.reload;
    }
    ui(ctx, canvas) {
       if (this.triggerText.length > 0) {
@@ -487,6 +561,9 @@ export default class Player {
             ctx.fillStyle = 'rgba(0, 0, 0, 1)';
             ctx.fillText(gun.data.name, canvas.width - 200 + 100 / 2, canvas.height - 70);
          }
+         // ctx.fillStyle = 'gray';
+
+         // ctx.fillText('---', canvas.width - 240 + 100 / 2, canvas.height - 100);
       }
       ctx.fillStyle = 'white';
       // if you have two guns
@@ -529,6 +606,8 @@ export default class Player {
       // if you have no guns
       if (this.primaryGun == null && this.secondaryGun == null) {
          ctx.fillText('---', canvas.width - 200 + 100 / 2, canvas.height - 70);
+         ctx.fillStyle = 'gray';
+         ctx.fillText('---', canvas.width - 240 + 100 / 2, canvas.height - 100);
       }
       ctx.shadowColor = 'transparent';
    }

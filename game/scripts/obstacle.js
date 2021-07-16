@@ -7,11 +7,28 @@ export default class Obstacle extends Rect {
    }
    render({ ctx, canvas }) {
       const pos = offset({ x: this.x, y: this.y }).round();
-      ctx.fillStyle = backgroundColor;
-      // ctx.fillRect(pos.x, pos.y, this.width * scale, this.height * scale);
+      ctx.fillStyle = '#7470b3';
+      ctx.fillRect(pos.x, pos.y, this.width * scale, this.height * scale);
       ctx.strokeStyle = '#15151c';
       ctx.lineWidth = strokeSize * 3.5;
-      ctx.strokeRect(pos.x, pos.y, this.width * scale, this.height * scale);
+      // ctx.strokeRect(pos.x, pos.y, this.width * scale, this.height * scale);
+   }
+   touchingBullet(bullet) {
+      const rectHalfSizeX = this.width / 2;
+      const rectHalfSizeY = this.height / 2;
+      const rectCenterX = this.x + rectHalfSizeX;
+      const rectCenterY = this.y + rectHalfSizeY;
+      const distX = Math.abs(bullet.pos.x - rectCenterX);
+      const distY = Math.abs(bullet.pos.y - rectCenterY);
+      if (distX < rectHalfSizeX + bullet.radius && distY < rectHalfSizeY + bullet.radius) {
+         const bulletSat = new SAT.Circle(new SAT.Vector(bullet.pos.x, bullet.pos.y), bullet.radius);
+         const res = new SAT.Response();
+         const collision = SAT.testPolygonCircle(this.sat, bulletSat, res);
+         if (collision) {
+            return { type: true, data: res };
+         }
+      }
+      return { type: false };
    }
    collide(player) {
       const rectHalfSizeX = this.width / 2;

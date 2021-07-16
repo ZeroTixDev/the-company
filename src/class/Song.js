@@ -8,7 +8,12 @@ export default class Song {
          this.loaded = true;
       });
    }
+   stop() {
+      this.audio.pause();
+      this.audio.currentTime = 0;
+   }
    play() {
+      this.audio.currentTime = 0;
       this.audio.play();
    }
 }
