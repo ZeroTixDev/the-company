@@ -4,7 +4,7 @@ export default function getSounds() {
          songs: ['rescue-operation', 'infiltration-attempt', 'infiltration-attempt-ambient'],
          random: true,
          for: 'menu',
-         volume: 0.15,
+         volume: 0.2,
       },
    };
 }

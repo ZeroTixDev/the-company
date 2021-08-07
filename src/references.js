@@ -6,7 +6,9 @@ const ref = {
    startDiv: '.start',
    guestButton: '.guest',
    fadeCanvas: '.fade-canvas',
+   startCanvas: '.start-canvas',
    sandboxButton: '.sandbox',
+   // backgroundImage: '.background-image',
 };
 
 for (const key of Object.keys(ref)) {

@@ -27,22 +27,22 @@ export default class Bullet {
          }
       }
       if (!this.dead) {
-         this.pos.add(this.vel.scale(delta));
-         state.obstacles.forEach((obstacle) => {
-            const collision = obstacle.touchingBullet(this);
-            if (collision.type) {
-               // if (Guns[this.type]?.bounce) {
-               //    // console.log(collision.data);
-               //    // if (Math.abs(collision.data.overlapV.y) > Math.abs(collision.data.overlapV.x)) {
-               //    //    this.vel.y *= -0.2;
-               //    // } else {
-               //    //    this.vel.x *= -0.2;
-               //    // }
-               // } else {
-               this.dead = true;
-               // }
-            }
-         });
+         const amount = Math.ceil(this.speed / 100);
+         for (let i = 0; i < amount; i++) {
+            this.pos.add(this.vel.scale(delta / amount));
+            state.obstacles.forEach((obstacle) => {
+               const collision = obstacle.touchingBullet(this);
+               if (collision.type) {
+                  this.dead = true;
+               }
+            });
+            state.cameras.forEach((camera) => {
+               if (!camera.disabled && camera.touchingBullet(this)) {
+                  camera.disable();
+                  this.dead = true;
+               }
+            });
+         }
       }
 
       if (this.dead) {

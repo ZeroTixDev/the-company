@@ -54,7 +54,11 @@ function sandbox() {
          // new Obstacle(600, 150, 50, 150),
       ],
       bullets: [],
-      cameras: [new Camera(860, 40, 135, 75, 300), new Camera(40, 620, 0, 75, 250)],
+      cameras: [
+         new Camera(840, 60, 135, 75, 300),
+         new Camera(60, 640, 0, 75, 250),
+         new Camera(500, 1220, 0, 75, 250, true),
+      ],
       doors: [
          /*new Door(600, 0, 50, 150)*/
       ],
@@ -105,8 +109,16 @@ function sandbox() {
    let targetCamera = new Vec(gameState.player.pos.x, gameState.player.pos.y);
    window.scale = 1;
    window.mapMode = false;
-   window.targetScale = 1.2;
-   window.backgroundColor = '#30304a';
+   window.targetScale = 1.3;
+   window.backgroundColor = '#5e3c10';
+   window.rayCastColor = '#6e4c20';
+   window.cameraV = new Vec(0, 0);
+   window.cameraVFric = 0.9;
+   window.cameraAngle = 0;
+
+   function lerp(start, end, time) {
+      return start * (1 - time) + end * time;
+   }
 
    window.offset = function ({ x, y }) {
       return new Vec(
@@ -123,9 +135,9 @@ function sandbox() {
    function update(state, delta) {
       delta = Math.min(delta, 1 / 30);
       if (zoomIn && state.player.holdingGun) {
-         targetScale = 1.1 + Math.min(zoomInTimer / 2, 0.25);
+         targetScale = 1.3 + Math.min(zoomInTimer / 2, 0.25);
       } else {
-         targetScale = 1.1;
+         targetScale = 1.3;
       }
 
       scale += (targetScale - scale) * delta * 2.5;
@@ -162,8 +174,25 @@ function sandbox() {
       }
       // camera.x += (state.player.pos.x - camera.x) * delta * 10;
       // camera.y += (state.player.pos.y - camera.y) * delta * 10;
-      camera.x = state.player.pos.x;
-      camera.y = state.player.pos.y;
+      cameraV.x *= Math.pow(cameraVFric, delta * 20);
+      cameraV.y *= Math.pow(cameraVFric, delta * 20);
+
+      const dtheta = -cameraAngle;
+      if (dtheta > Math.PI) {
+         cameraAngle += 2 * Math.PI;
+      } else if (dtheta < -Math.PI) {
+         cameraAngle -= 2 * Math.PI;
+      }
+      cameraAngle = lerp(cameraAngle, 0, delta * 10);
+      if (state.player.shotThisFrame) {
+         const angle = state.player.angle;
+         cameraAngle += (Math.random() - 0.5) * 0.05;
+         scale -= 0.05;
+         cameraV.x += Math.cos(angle) * (5 + Math.random() * 5);
+         cameraV.y += Math.sin(angle) * (5 + Math.random() * 5);
+      }
+      camera.x = state.player.pos.x + cameraV.x;
+      camera.y = state.player.pos.y + cameraV.y;
    }
 
    // function detectMouseHoverOnElements(state) {
@@ -183,34 +212,58 @@ function sandbox() {
 
    function render(state) {
       // ctx.globalCompositeOperation = 'source-over';
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      const points = Ray.getPoints(state.player.pos, uniquePoints, state.lines, state.player.radius);
-      ctx.fillStyle = '#aba9c4';
-      ctx.beginPath();
-      ctx.globalAlpha = 1;
-      ctx.lineWidth = 20;
-      if (!mapMode) {
-         for (const { x, y } of points) {
-            const pos = offset({ x, y }).round();
-            ctx.lineTo(pos.x, pos.y);
-         }
-      } else {
-         ctx.lineTo(0, 0);
-         ctx.lineTo(canvas.width, 0);
-         ctx.lineTo(canvas.width, canvas.height);
-         ctx.lineTo(0, canvas.width);
-         ctx.lineTo(0, 0);
-      }
-      ctx.fill();
-      ctx.globalAlpha = 1;
+      // const points = Ray.getPoints(state.player.pos, uniquePoints, state.lines, state.player.radius);
+      // ctx.fillStyle = '#aba9c4';
+      // ctx.beginPath();
+      // ctx.globalAlpha = 1;
+      // ctx.lineWidth = 20;
+      // if (!mapMode) {
+      //    for (const { x, y } of points) {
+      //       const pos = offset({ x, y }).round();
+      //       ctx.lineTo(pos.x, pos.y);
+      //    }
+      // } else {
+      //    ctx.lineTo(0, 0);
+      //    ctx.lineTo(canvas.width, 0);
+      //    ctx.lineTo(canvas.width, canvas.height);
+      //    ctx.lineTo(0, canvas.width);
+      //    ctx.lineTo(0, 0);
+      // }
+      // ctx.fill();
+      // ctx.globalAlpha = 1;
 
       // ctx.globalCompositeOperation = 'destination-in';
 
-      ctx.globalCompositeOperation = 'source-in';
+      // ctx.globalCompositeOperation = 'source-in';
+
       // ct.clearRect(0, 0, can.width, can.height);
       ct.fillStyle = backgroundColor;
       ct.fillRect(0, 0, can.width, can.height);
+      ct.save();
+      ct.translate(can.width / 2, can.height / 2);
+      ct.rotate(cameraAngle);
+      ct.translate(-can.width / 2, -can.height / 2);
+      const points = Ray.getPoints(state.player.pos, uniquePoints, state.lines, state.player.radius);
+      ct.fillStyle = window.rayCastColor;
+      ct.beginPath();
+      ct.globalAlpha = 1;
+      ct.lineWidth = 20;
+      if (!mapMode) {
+         for (const { x, y } of points) {
+            const pos = offset({ x, y }).round();
+            ct.lineTo(pos.x, pos.y);
+         }
+      } else {
+         ct.lineTo(0, 0);
+         ct.lineTo(canvas.width, 0);
+         ct.lineTo(canvas.width, canvas.height);
+         ct.lineTo(0, canvas.width);
+         ct.lineTo(0, 0);
+      }
+      ct.fill();
+      ct.globalAlpha = 1;
       // ctx.clearRect(0, 0, rayCanvas.width, rayCanvas.height);
       // state.world.render({ ctx, canvas });
       state.cameras.forEach((camera) => {
@@ -233,8 +286,13 @@ function sandbox() {
          item.render({ ctx: ct, canvas: can });
       });
 
+      ct.restore();
       // ctx.globalCompositeOperation = 'source-over';
       ctx.imageSmoothingQuality = 'low';
+      // ctx.save();
+      // ctx.translate(can.width / 2, can.height / 2);
+      // ctx.rotate(window.cameraAngle);
+      // ctx.translate(-can.width / 2, -can.height / 2);
       ctx.drawImage(can, 0, 0, can.width, can.height);
 
       ctx.globalCompositeOperation = 'destination-over';
@@ -243,8 +301,15 @@ function sandbox() {
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       ctx.globalCompositeOperation = 'source-over';
+      ctx.save();
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.rotate(cameraAngle);
+      ctx.translate(-canvas.width / 2, -canvas.height / 2);
       state.player.render(ctx);
+      ctx.restore();
       state.player.ui(ctx, canvas);
+
+      // ctx.restore();
 
       // detectMouseHoverOnElements(state);
 
@@ -268,24 +333,10 @@ function sandbox() {
    })();
 
    function resize() {
-      canvas.width = window.innerWidth * window.devicePixelRatio;
-      canvas.height = window.innerHeight * window.devicePixelRatio;
-      can.width = window.innerWidth * window.devicePixelRatio;
-      can.height = window.innerHeight * window.devicePixelRatio;
-
-      canvas.style.width = `${window.innerWidth}px`;
-      canvas.style.height = `${window.innerHeight}px`;
-      can.style.width = `${window.innerWidth}px`;
-      can.style.height = `${window.innerHeight}px`;
-
-      function getScale() {
-         return (
-            Math.max(
-               window.innerHeight * window.devicePixelRatio,
-               window.innerWidth * window.devicePixelRatio * (9 / 16)
-            ) / 1000
-         );
-      }
+      canvas.width = 1600;
+      canvas.height = 900;
+      can.width = 1600;
+      can.height = 900;
    }
 
    function trackKeys(event) {
@@ -344,11 +395,11 @@ function sandbox() {
          zoomInTimer = 0;
       }
    });
-   window.addEventListener('wheel', (event) => {
-      window.scale -= Math.sign(event.deltaY) * 0.3;
-      window.scale = Math.min(window.scale, 5);
-      window.scale = Math.max(window.scale, 0.2);
-   });
+   // window.addEventListener('wheel', (event) => {
+   //    window.scale -= Math.sign(event.deltaY) * 0.3;
+   //    window.scale = Math.min(window.scale, 5);
+   //    window.scale = Math.max(window.scale, 0.2);
+   // });
    window.addEventListener('keydown', trackKeys);
    window.addEventListener('keyup', trackKeys);
 

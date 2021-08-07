@@ -48,14 +48,12 @@ export default class Soundtrack {
          const songIndex = this.lastSongIndex === null ? this.generateSongIndex() : this.getUniqueSongIndex();
          this.lastSongIndex = songIndex;
          this.songs[songIndex].play();
-         this.songs[songIndex].audio.playbackRate = 1;
-         this.songs[songIndex].audio.addEventListener('ended', onEnd.bind(this));
-         console.log('playing', this.songs[songIndex].name);
-         function onEnd() {
-            this.songs[songIndex].audio.removeEventListener('ended', onEnd);
+         this.songs[songIndex].audio.onended = function () {
+            console.log(this.songs[songIndex].name + ' song has ended.');
             this.songs[songIndex].stop();
             this.play();
-         }
+         }.bind(this);
+         console.log('playing', this.songs[songIndex].name);
       }
    }
    getUniqueSongIndex() {

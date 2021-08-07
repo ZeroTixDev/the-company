@@ -22,18 +22,34 @@
    </head>
    <body oncontextmenu="return false">
       <div class="overlay"></div>
-      <div class="start hidden">
-         <button class="guest"><span class="text">Play as Guest</span></button>
+      <div class="container">
+         <div class="start hidden">
+            <!-- <img src="../images/background.jpg" class="background-image" width="1454px" height="818px" /> -->
+            <canvas class="start-canvas"></canvas>
+            <button class="guest">Play as Guest</button>
+            <button class="account">Use Account</button>
+         </div>
+         <div class="loading hidden">
+            <span class="text">Loading...</span>
+         </div>
+         <div class="menu hidden">
+            <!-- <span class="title"><span class="text">The Company</span></span> -->
+            <img src="../images/menu-background.jpg" class="background-image" width="1600px" height="900px" />
+            <div class="main-buttons">
+               <button class="missions">Missions</button>
+               <button class="persona">Persona</button>
+               <button class="faq">FAQs</button>
+               <button class="loadout">Loadout</button>
+               <button class="skills">Skills</button>
+               <button class="feedback">Send Feedback</button>
+               <button class="sandbox">Sandbox</button>
+            </div>
+            <span class="text money">$69,420</span>
+         </div>
+         <div class="game hidden">
+            <canvas class="game-canvas"></canvas>
+         </div>
+         <canvas class="fade-canvas hidden"></canvas>
       </div>
-      <div class="loading hidden">
-         <span class="text">Loading...</span>
-      </div>
-      <div class="menu hidden">
-         <span class="title"><span class="text">The Company</span><button class="sandbox">Sandbox</button></span>
-      </div>
-      <div class="game hidden">
-         <canvas class="game-canvas"></canvas>
-      </div>
-      <canvas class="fade-canvas hidden"></canvas>
    </body>
 </html>

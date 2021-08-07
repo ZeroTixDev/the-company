@@ -262,6 +262,10 @@ export default class Player {
          }
       }
 
+      if (this.shotThisFrame) {
+         this.shotThisFrame = false;
+      }
+
       if (
          this.shouldShoot ||
          (mouseDown && this.selectedGun && this.currentGun != null && this.currentGun.data.automatic)
@@ -422,6 +426,7 @@ export default class Player {
          this.recoil.y += Math.sin(this.angle) * -gun.data.recoil;
       }
       this.reload = gun.data.reload;
+      this.shotThisFrame = true;
    }
    ui(ctx, canvas) {
       if (this.triggerText.length > 0) {

@@ -7,14 +7,32 @@
 body {
    font-size: 16px;
    font-family: 'Harmattan', sans-serif;
-   background-color: #3b3542;
+   background-color: rgb(9, 9, 9);
+   overflow: hidden;
+}
+
+.container {
+   background-color: rgb(9, 9, 9);
+   position: absolute;
+   left: 0;
+   top: 0;
+   z-index: 5000000;
+   overflow: hidden !important;
 }
 
 canvas {
    position: absolute;
    left: 0;
    top: 0;
+   z-index: 100000;
+   pointer-events: none;
 }
+
+/* .start-text {
+	color: rgb(187, 187, 187);
+	filter:none !important;
+	font-size: 2rem;
+} */
 
 .overlay,
 .start,
@@ -23,9 +41,48 @@ canvas {
    position: absolute;
    left: 0;
    top: 0;
-   width: 100vw;
-   height: 100vh;
-   background-color: #3b3542;
+   width: 1600px;
+   height: 900px;
+   background-color: #38211c;
+   /* animation: fadeIn 2s ease-in-out; */
+}
+
+.fade-in-animation {
+   animation: fadeIn 1s ease-in-out;
+}
+
+@keyframes fadeIn {
+   0% {
+      opacity: 0;
+   }
+   100% {
+      opacity: 1;
+   }
+}
+
+.background-image {
+   position: absolute;
+   transform-origin: center center;
+   left: 0px;
+   top: 0px;
+   opacity: 1;
+}
+
+@keyframes opacityFlicker {
+   0% {
+      opacity: 0.8;
+   }
+   50% {
+      opacity: 1;
+   }
+   100% {
+      opacity: 0.8;
+   }
+}
+
+.overlay {
+   background-color: rgb(9, 9, 9) !important;
+   /* z-index: -1; */
 }
 
 .loading {
@@ -33,7 +90,7 @@ canvas {
 }
 
 .menu {
-   z-index: 20000;
+   z-index: 25000;
 }
 
 .sandbox {
@@ -51,12 +108,11 @@ canvas {
    display: flex;
    justify-content: center;
    align-items: center;
-   width: 100vw;
-   height: 100vh;
+   width: 1600px;
+   height: 200px;
    position: absolute;
-   flex-direction: column;
    left: 0;
-   top: 0;
+   top: 200px;
 }
 
 .start {
@@ -66,6 +122,10 @@ canvas {
    z-index: 1000000;
 }
 
+.start button {
+   transform: scale(0.8);
+}
+
 .loading {
    font-size: 4.5rem;
    color: white;
@@ -73,15 +133,15 @@ canvas {
 }
 
 .overlay {
-   z-index: 100000000;
+   z-index: 40000;
 }
 
 .game {
    position: absolute;
    left: 0;
    top: 0;
-   width: 100vw;
-   height: 100vh;
+   width: 1600px;
+   height: 900px;
    background-color: #423735;
 }
 
@@ -92,20 +152,21 @@ canvas {
 }
 
 button {
-   box-shadow: 3px 3px 0px rgb(8, 8, 8);
+   box-shadow: 3px 3px 0px rgba(0, 0, 0, 1);
    width: 400px;
    height: 150px;
-   transform: scale(0.8);
+   /* transform: scale(0.8); */
    color: white;
-   background-color: rgba(0, 0, 0, 0.5);
+   background-color: rgba(0, 0, 0, 0.7);
    font-size: 3rem;
    border: none;
    outline: none;
+   /* margin: 2px; */
    cursor: pointer;
-   transition: background-color 0.2s linear;
+   transition: background-color 0.2s ease-in-out, opacity 0.5s linear;
 }
 button:hover {
-   background-color: rgba(255, 255, 255, 0.1);
+   background-color: rgba(92, 92, 92, 0.2);
 }
 
 .button-focus {
@@ -115,18 +176,31 @@ button:hover {
    animation: startAnim 1s ease-in-out;
 }
 
+.fade-animation {
+   animation: fadeOut 1s ease-in-out;
+}
+
 @keyframes startAnim {
    0% {
-      left: 0;
+      width: 1600px;
    }
    100% {
-      left: -100vw;
+      width: 0px;
    }
 }
 
-.fade-canvas {
-   z-index: 100000000;
+@keyframes fadeOut {
+   0% {
+      opacity: 1;
+   }
+   100% {
+      opacity: 0;
+   }
 }
+
+/* .fade-canvas {
+   z-index: 100000000;
+} */
 
 .text {
    filter: drop-shadow(3px 3px 0px rgb(0, 0, 0));
@@ -136,4 +210,83 @@ button:hover {
 
 .hidden {
    display: none !important;
+}
+
+.missions {
+   box-shadow: none;
+   position: absolute;
+   left: 0;
+   top: 0;
+   width: calc(1600px / 3);
+   height: 150px;
+}
+
+.persona {
+   box-shadow: none;
+   position: absolute;
+   left: calc(1600px / 3);
+   top: 0;
+   width: calc(1600px / 3);
+   height: 150px;
+}
+
+.faq {
+   box-shadow: none;
+   position: absolute;
+   left: calc(1600px / 1.5);
+   top: 0;
+   width: calc(1600px / 3);
+   height: 150px;
+}
+
+.skills {
+   box-shadow: none;
+   position: absolute;
+   left: 0px;
+   top: 700px;
+   width: 250px;
+   height: 80px;
+   font-size: 2rem;
+   background-color: rgba(0, 0, 0, 1) !important;
+}
+
+.loadout {
+   box-shadow: none;
+   position: absolute;
+   left: 0px;
+   top: 600px;
+   width: 250px;
+   height: 80px;
+   font-size: 2rem;
+   background-color: rgba(0, 0, 0, 1) !important;
+}
+
+.money {
+   font-size: 3rem;
+   color: white;
+   position: absolute;
+   left: 5px;
+   top: 150px;
+   filter: drop-shadow(2px 2px 0px rgb(0, 0, 0));
+}
+
+.sandbox {
+   box-shadow: none;
+   position: absolute;
+   left: 0px;
+   top: 800px;
+   width: 250px;
+   height: 80px;
+   font-size: 2rem;
+   background-color: rgba(0, 0, 0, 1) !important;
+}
+
+.feedback {
+   box-shadow: none;
+   position: absolute;
+   left: calc(1600px - calc(1600px / 6));
+   bottom: 0;
+   width: calc(1600px / 6);
+   height: 75px;
+   font-size: 2rem;
 }
