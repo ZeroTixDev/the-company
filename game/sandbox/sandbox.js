@@ -57,6 +57,8 @@ function sandbox() {
       bullets: [],
       cameras: [
          new Camera(840, 60, 135, 75, 300),
+         new Camera(1040, 60, 45, 75, 300),
+         new Camera(1440, 60, 135, 75, 300),
          new Camera(60, 640, 0, 75, 250),
          new Camera(500, 1220, 0, 75, 250, true),
       ],
@@ -66,6 +68,7 @@ function sandbox() {
       items: [
          // new Bag(500, 1100, null),
          new Bag(300, 1100, null),
+         new Bag(500, 700, null),
          new Gun(300, 200, 'Cz45'),
          new Gun(200, 100, 'Arrow'),
          new Gun(100, 1200, 'Spas12'),
@@ -312,10 +315,10 @@ function sandbox() {
       ctx.translate(-canvas.width / 2, -canvas.height / 2);
       state.player.render(ctx);
       ctx.restore();
+      state.player.ui(ctx, canvas);
       state.bullets.forEach((bullet) => {
          bullet.render({ ctx, canvas });
       });
-      state.player.ui(ctx, canvas);
 
       // ctx.restore();
 

@@ -367,7 +367,26 @@ export default class Player {
       ctx.fill();
       ctx.stroke();
 
+      if (this.bag !== null) {
+         ctx.fillStyle = '#61440e';
+         ctx.strokeStyle = '#261900';
+         ctx.lineWidth = strokeSize * 2;
+         ctx.beginPath();
+         ctx.ellipse(
+            0,
+            (this.radius / 2) * scale,
+            (this.radius / 1.2) * scale,
+            (this.radius / 1.5) * scale,
+            0,
+            0,
+            Math.PI * 2
+         );
+         ctx.fill();
+         ctx.stroke();
+      }
+
       //hands
+      ctx.fillStyle = '#7d7d7d';
       const gun = this.currentSelectedGun === 'primary' ? this.primaryGun : this.secondaryGun;
       if (this.selectedGun && gun != null && gun.data.render !== undefined) {
          gun.data.render({ ctx, radius: this.radius, scale, gun });
@@ -388,24 +407,6 @@ export default class Player {
             (this.radius / 1.4) * scale,
             (-this.radius / 1.2) * scale,
             (this.radius / 3.5) * scale,
-            0,
-            Math.PI * 2
-         );
-         ctx.fill();
-         ctx.stroke();
-      }
-
-      if (this.bag !== null) {
-         ctx.fillStyle = '#61440e';
-         ctx.strokeStyle = '#261900';
-         ctx.lineWidth = strokeSize * 2;
-         ctx.beginPath();
-         ctx.ellipse(
-            0,
-            (this.radius / 2) * scale,
-            (this.radius / 1.2) * scale,
-            (this.radius / 1.5) * scale,
-            0,
             0,
             Math.PI * 2
          );
