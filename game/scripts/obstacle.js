@@ -7,7 +7,7 @@ export default class Obstacle extends Rect {
    }
    render({ ctx, canvas }) {
       const pos = offset({ x: this.x, y: this.y }).round();
-      ctx.fillStyle = '#7470b3';
+      ctx.fillStyle = '#42230b';
       ctx.fillRect(pos.x, pos.y, this.width * scale, this.height * scale);
       ctx.strokeStyle = '#15151c';
       ctx.lineWidth = strokeSize * 3.5;

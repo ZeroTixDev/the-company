@@ -2,21 +2,39 @@ import Vec from './vector.js';
 import Guns from '../data/gun.js';
 
 export default class Bullet {
-   constructor(pos, angle, type = null) {
+   constructor(pos, angle, type = null, extraData = {}) {
       this.pos = pos.copy();
       this.angle = angle;
       this.type = type;
       this.speed = Guns[this.type]?.bulletSpeed === undefined ? 10 : Guns[this.type].bulletSpeed;
       this.radius = Guns[this.type]?.bulletRadius === undefined ? 10 : Guns[this.type].bulletRadius;
-      this.vel = new Vec(Math.cos(this.angle) * this.speed, Math.sin(this.angle) * this.speed);
       this.alpha = 1;
       this.dead = false;
       this.life = Guns[this.type]?.life;
       this.historyLength = Guns[this.type]?.historyLength === undefined ? 30 : Guns[this.type].historyLength;
       this.maxLife = this.life;
       this.history = [];
+      if (extraData.bulletSpeed) {
+         this.speed = extraData.bulletSpeed;
+         console.log(this.speed);
+      }
+      this.vel = new Vec(Math.cos(this.angle) * this.speed, Math.sin(this.angle) * this.speed);
    }
    update(state, delta) {
+      if (this.dead) {
+         this.radius += delta * 15;
+         this.alpha -= delta * 3;
+         if (this.alpha < 0) {
+            this.delete = true;
+         }
+         this.history.shift();
+      } else {
+         this.history.push({ pos: this.pos.copy(), radius: this.radius });
+         if (this.history.length > this.historyLength) {
+            this.history.shift();
+         }
+      }
+
       if (this.life !== undefined && !this.dead) {
          this.life -= delta;
          this.alpha = this.life / this.maxLife;
@@ -42,20 +60,6 @@ export default class Bullet {
                   this.dead = true;
                }
             });
-         }
-      }
-
-      if (this.dead) {
-         this.radius += delta * 15;
-         this.alpha -= delta * 3;
-         if (this.alpha < 0) {
-            this.delete = true;
-         }
-         this.history.shift();
-      } else {
-         this.history.push({ pos: this.pos.copy(), radius: this.radius });
-         if (this.history.length > this.historyLength) {
-            this.history.shift();
          }
       }
    }

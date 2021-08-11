@@ -45,6 +45,7 @@ export default class Player {
       this.laser = new Ray(this.pos.x, this.pos.y, this.angle);
       this.laserEnd = new Vec(0, 0);
       this.shouldShoot = false;
+      this.shouldShootLastFrame = false;
    }
    get holdingGun() {
       if (!this.selectedGun) return false;
@@ -95,7 +96,7 @@ export default class Player {
       }
       if (this.selectedGun) {
          const gun = this.currentSelectedGun === 'primary' ? this.primaryGun : this.secondaryGun;
-         if (gun != null) {
+         if (gun != null && !gun.data.notEquipped) {
             status = 'Armed';
             if (zoomInTimer > 0.3) {
                status = 'Intimidating';
@@ -268,10 +269,17 @@ export default class Player {
 
       if (
          this.shouldShoot ||
-         (mouseDown && this.selectedGun && this.currentGun != null && this.currentGun.data.automatic)
+         (mouseDown && this.selectedGun && this.currentGun != null && this.currentGun.data.automatic) ||
+         (this.currentGun && this.currentGun.data.needsToShoot)
       ) {
-         this.shouldShoot = false;
-         this.shoot(state);
+         if (this.currentGun && this.currentGun.canShoot(this, state, mouseDown)) {
+            this.shoot(state);
+            this.shouldShoot = false;
+         }
+      }
+
+      if (this.currentGun !== null) {
+         this.currentGun.simulate(delta);
       }
 
       this.triggerText = '';
@@ -351,7 +359,7 @@ export default class Player {
       // ctx.save();
       ctx.translate(pos.x, pos.y);
       ctx.rotate(this.angle + Math.PI / 2);
-      ctx.lineWidth = strokeSize * 2;
+      ctx.lineWidth = strokeSize * 2 * scale;
       ctx.fillStyle = '#7d7d7d';
       ctx.strokeStyle = '#363636';
       ctx.beginPath();
@@ -362,7 +370,7 @@ export default class Player {
       //hands
       const gun = this.currentSelectedGun === 'primary' ? this.primaryGun : this.secondaryGun;
       if (this.selectedGun && gun != null && gun.data.render !== undefined) {
-         gun.data.render({ ctx, radius: this.radius, scale });
+         gun.data.render({ ctx, radius: this.radius, scale, gun });
       } else {
          ctx.beginPath();
          ctx.strokeStyle = '#363636';
@@ -416,9 +424,9 @@ export default class Player {
       if (gun.data.bulletSpawn === undefined) {
          state.bullets.push(new Bullet(this.pos, this.angle, gun.type));
       } else {
-         const arr = gun.data.bulletSpawn(this.pos, this.radius, this.angle);
-         for (const { pos, angle } of arr) {
-            state.bullets.push(new Bullet(Vec.from(pos), angle, gun.type));
+         const arr = gun.data.bulletSpawn(this.pos, this.radius, this.angle, this.currentGun);
+         for (const { pos, angle, extraData } of arr) {
+            state.bullets.push(new Bullet(Vec.from(pos), angle, gun.type, extraData));
          }
       }
       if (gun.data.recoil !== undefined) {

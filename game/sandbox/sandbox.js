@@ -36,6 +36,7 @@ function sandbox() {
       Digit2: { action: 'secondary-gun' },
       KeyM: { action: 'map-mode' },
       KeyC: { action: 'laser' },
+      Space: { action: 'slow' },
    };
    window.gameState = {
       player: new Player(100, 200, 35, 250),
@@ -66,6 +67,7 @@ function sandbox() {
          // new Bag(500, 1100, null),
          new Bag(300, 1100, null),
          new Gun(300, 200, 'Cz45'),
+         new Gun(200, 100, 'Arrow'),
          new Gun(100, 1200, 'Spas12'),
          new Gun(100, 1400, 'Ak47'),
       ],
@@ -133,7 +135,7 @@ function sandbox() {
    };
 
    function update(state, delta) {
-      delta = Math.min(delta, 1 / 30);
+      delta = Math.min(delta, 1 / 30) / (window.slowmo ? 4 : 1);
       if (zoomIn && state.player.holdingGun) {
          targetScale = 1.3 + Math.min(zoomInTimer / 2, 0.25);
       } else {
@@ -183,13 +185,19 @@ function sandbox() {
       } else if (dtheta < -Math.PI) {
          cameraAngle -= 2 * Math.PI;
       }
-      cameraAngle = lerp(cameraAngle, 0, delta * 10);
+      cameraAngle = lerp(cameraAngle, 0, delta * 15);
       if (state.player.shotThisFrame) {
          const angle = state.player.angle;
-         cameraAngle += (Math.random() - 0.5) * 0.05;
-         scale -= 0.05;
-         cameraV.x += Math.cos(angle) * (5 + Math.random() * 5);
-         cameraV.y += Math.sin(angle) * (5 + Math.random() * 5);
+         cameraAngle += (Math.random() - 0.5) * 0.1;
+         // if (cameraAngle < -0.2) {
+         //    cameraAngle = -0.2;
+         // }
+         // if (cameraAngle > 0.2) {
+         //    cameraAngle = 0.2;
+         // }
+         scale -= 0.01;
+         cameraV.x += Math.cos(angle) * (1 + Math.random() * 20);
+         cameraV.y += Math.sin(angle) * (1 + Math.random() * 20);
       }
       camera.x = state.player.pos.x + cameraV.x;
       camera.y = state.player.pos.y + cameraV.y;
@@ -269,9 +277,6 @@ function sandbox() {
       state.cameras.forEach((camera) => {
          camera.render({ ctx: ct, canvas: can });
       });
-      state.bullets.forEach((bullet) => {
-         bullet.render({ ctx: ct, canvas: can });
-      });
       state.obstacles.forEach((obstacle) => {
          obstacle.render({ ctx: ct, canvas: can });
       });
@@ -307,6 +312,9 @@ function sandbox() {
       ctx.translate(-canvas.width / 2, -canvas.height / 2);
       state.player.render(ctx);
       ctx.restore();
+      state.bullets.forEach((bullet) => {
+         bullet.render({ ctx, canvas });
+      });
       state.player.ui(ctx, canvas);
 
       // ctx.restore();
@@ -332,6 +340,8 @@ function sandbox() {
       requestAnimationFrame(run);
    })();
 
+   window.slowmo = false;
+
    function resize() {
       canvas.width = 1600;
       canvas.height = 900;
@@ -344,6 +354,9 @@ function sandbox() {
       if (controls[event.code] !== undefined) {
          if (controls[event.code].key !== undefined) {
             input[controls[event.code].key] = event.type === 'keydown';
+         }
+         if (controls[event.code].action === 'slow') {
+            window.slowmo = event.type === 'keydown';
          }
          if (controls[event.code].action !== undefined && event.type === 'keydown') {
             if (controls[event.code].action === 'drop-bag') {
@@ -382,6 +395,7 @@ function sandbox() {
       if (event.button === 0) {
          mouseDown = true;
          gameState.player.shouldShoot = true;
+         gameState.player.shouldShootLastFrame = false;
       } else if (event.button === 2) {
          zoomIn = true;
       }
@@ -390,6 +404,8 @@ function sandbox() {
       event.preventDefault();
       if (event.button === 0) {
          mouseDown = false;
+         gameState.player.shouldShoot = false;
+         gameState.player.shouldShootLastFrame = true;
       } else if (event.button === 2) {
          zoomIn = false;
          zoomInTimer = 0;

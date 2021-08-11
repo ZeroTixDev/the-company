@@ -8,6 +8,7 @@ export default class Gun extends Item {
       this.gun = true;
       this.radius = 48;
       this.ammo = ammo;
+      this.data = Guns[this.type];
    }
    copy(pos = null) {
       if (pos == null) {
@@ -15,9 +16,6 @@ export default class Gun extends Item {
       } else {
          return new Gun(pos.x, pos.y, this.type, this.ammo);
       }
-   }
-   get data() {
-      return Guns[this.type];
    }
    collide(player) {
       const distX = player.pos.x - this.pos.x;
@@ -28,6 +26,14 @@ export default class Gun extends Item {
       const distX = point.x - this.pos.x;
       const distY = point.y - this.pos.y;
       return Math.sqrt(distX * distX + distY * distY) < this.radius + strokeSize * 2;
+   }
+   canShoot(player, state, mouseDown) {
+      return this.data.canShoot === undefined ? true : this.data.canShoot(player, state, this, mouseDown);
+   }
+   simulate(delta) {
+      if (this.data.update !== undefined) {
+         this.data.update(this, mouseDown, delta);
+      }
    }
    render({ ctx, canvas }) {
       ctx.fillStyle = 'rgb(25, 25, 25)';
@@ -46,8 +52,12 @@ export default class Gun extends Item {
          ctx.imageSmoothingQuality = 'high';
          ctx.drawImage(
             this.data.image,
-            Math.round(pos.x - (this.data.width / 2) * scale),
-            Math.round(pos.y - (this.data.height / 2) * scale),
+            Math.round(
+               pos.x + (this.data.xoff === undefined ? 0 : this.data.xoff) * scale - (this.data.width / 2) * scale
+            ),
+            Math.round(
+               pos.y + (this.data.yoff === undefined ? 0 : this.data.yoff) * scale - (this.data.height / 2) * scale
+            ),
             Math.round(this.data.width * scale),
             Math.round(this.data.height * scale)
          );

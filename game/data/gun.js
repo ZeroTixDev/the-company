@@ -1,5 +1,116 @@
 import loadImage from '../scripts/loadImage.js';
 const Guns = {
+   Arrow: {
+      image: loadImage('guns/arrow.svg'),
+      color: 'blue',
+      width: Math.round(87 * 1.3),
+      height: Math.round(50 * 1.3),
+      xoff: 28,
+      yoff: 0,
+      name: 'ARROW',
+      bulletRadius: 8,
+      bulletSpeed: 500,
+      life: 4,
+      recoil: 0,
+      reload: 0.25,
+      historyLength: 0,
+      notEquipped: true,
+      bulletRender: function ({ ctx, radius, scale }) {
+         ctx.fillStyle = '#0ee374';
+         ctx.fillRect(-5 * scale, 0, 10 * scale, 30 * scale);
+      },
+      bulletSpawn: function (pos, radius, angle, gun) {
+         const ang = angle + (Math.random() - Math.random()) * 0.02;
+         // console.log(gun.data.needsToShoot);
+         const arrow = [
+            {
+               pos: {
+                  x: pos.x + Math.cos(angle) * (radius - gun.data.needsToShoot * 20),
+                  y: pos.y + Math.sin(angle) * (radius - gun.data.needsToShoot * 20),
+               },
+               angle: ang,
+               extraData: {
+                  bulletSpeed: 200 + (gun.data.needsToShoot / 3) * 800,
+               },
+            },
+         ];
+         gun.data.needsToShoot = false;
+         return arrow;
+         // returns bullets
+      },
+      // arrowingMult: 1.0005,
+      arrowing: false,
+      needsToShoot: false,
+      update: function (gun, mouseDown, delta) {
+         if (mouseDown) {
+            gun.data.arrowing += delta * 1.3;
+            if (gun.data.arrowing >= 3) {
+               gun.data.arrowing = 3;
+            }
+            gun.data.notEquipped = false;
+         } else {
+            if (gun.data.arrowing > 0) {
+               gun.data.needsToShoot = gun.data.arrowing;
+            }
+            gun.data.arrowing = 0;
+            gun.data.notEquipped = true;
+         }
+      },
+      canShoot: function (player, state, gun, mouseDown) {
+         if (gun.data.needsToShoot) {
+            // gun.data.needsToShoot = false;
+            return true;
+         }
+         return false;
+      },
+      render: function ({ ctx, radius, scale, gun }) {
+         if (!gun.data.arrowing) {
+            ctx.beginPath();
+            ctx.strokeStyle = '#363636';
+            ctx.arc((-radius / 1.4) * scale, (-radius / 1.2) * scale, (radius / 3.5) * scale, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc((radius / 1.4) * scale, (-radius / 1.2) * scale, (radius / 3.5) * scale, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+         } else {
+            // const arrowing = Math.min(Math.ceil(gun.data.arrowing), 3);
+            // ctx.fillStyle = 'black';
+            // ctx.fillText(arrowing, 0, 0);
+
+            ctx.beginPath();
+            ctx.strokeStyle = '#ababab';
+            ctx.lineWidth = scale;
+            ctx.lineTo(Math.cos(1.25 * Math.PI) * (60 * scale), Math.sin(1.25 * Math.PI) * (60 * scale));
+            ctx.lineTo(-5 * scale, -30 * scale + gun.data.arrowing * 25 * scale);
+            ctx.lineTo(5 * scale, -30 * scale + gun.data.arrowing * 25 * scale);
+            ctx.lineTo(Math.cos(1.75 * Math.PI) * (60 * scale), Math.sin(1.75 * Math.PI) * (60 * scale));
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(0, 0, 60 * scale, 1.25 * Math.PI, 1.75 * Math.PI, false);
+            ctx.lineWidth = 5 * scale;
+            ctx.strokeStyle = '#1cfc88';
+            ctx.stroke();
+
+            ctx.fillStyle = '#0ee374';
+            ctx.fillRect(-5 * scale, -60 * scale + gun.data.arrowing * 25 * scale, 10 * scale, 30 * scale);
+
+            ctx.beginPath();
+            ctx.fillStyle = '#7d7d7d';
+            ctx.strokeStyle = '#363636';
+            ctx.lineWidth = strokeSize * 2 * scale;
+            ctx.arc(15 * scale, (-radius - 20) * scale, (radius / 3.5) * scale, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(12 * scale, (-radius - 8 + gun.data.arrowing * 25) * scale, (radius / 3.5) * scale, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+         }
+      },
+   },
    Cz45: {
       image: loadImage('guns/cz45.svg'),
       color: 'blue',
@@ -7,7 +118,7 @@ const Guns = {
       height: Math.round(50 * 1.25),
       name: 'CZ45',
       bulletRadius: 8,
-      bulletSpeed: 1000,
+      bulletSpeed: 1500,
       recoil: 0.05,
       reload: 0.25,
       historyLength: 30,
